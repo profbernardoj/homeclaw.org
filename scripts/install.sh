@@ -232,6 +232,25 @@ else
   echo "⚠️  npm not found. Install Node.js, then run: cd $EVERCLAW_ROOT && npm install"
 fi
 
+# --- Bootstrap EverClaw Key (GLM-5 Starter Access) ---
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  EverClaw Bootstrap — GLM-5 Starter Key"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if command -v node &>/dev/null; then
+  echo "  Getting your starter key for GLM-5 inference..."
+  if node "$SCRIPT_DIR/bootstrap-everclaw.mjs" --setup 2>/dev/null; then
+    : # Success message already printed by the script
+  else
+    echo "  ⚠️  Could not reach EverClaw key server."
+    echo "  Run manually later: node scripts/bootstrap-everclaw.mjs"
+  fi
+else
+  echo "  ⚠️  Node.js not found. Install Node.js, then run:"
+  echo "     node scripts/bootstrap-everclaw.mjs"
+fi
+
 echo ""
 echo "Everclaw (Morpheus Lumerin Node) installed to ${INSTALL_DIR}"
 echo ""
