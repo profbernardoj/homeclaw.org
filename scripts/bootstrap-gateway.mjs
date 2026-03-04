@@ -17,10 +17,11 @@
  *   node scripts/bootstrap-gateway.mjs --status     # Show gateway status
  */
 
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { homedir } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -259,6 +260,21 @@ async function cmdSetup(userKey) {
       }
     }, null, 2));
     process.exit(0);
+  }
+
+  // If user provided their own key, check for bootstrap key graduation
+  if (isOwnKey) {
+    const bootstrapKeyPath = join(homedir(), '.openclaw', '.bootstrap-key');
+    if (existsSync(bootstrapKeyPath)) {
+      console.log('\n  🎓 Graduating from EverClaw bootstrap key...');
+      try {
+        unlinkSync(bootstrapKeyPath);
+        console.log('  ✓ Removed bootstrap key file');
+        console.log('  ✓ Your own API key is now active');
+      } catch (e) {
+        console.log(`  ⚠️  Could not remove bootstrap key: ${e.message}`);
+      }
+    }
   }
 
   console.log(`  Patching config: ${configPath}`);
