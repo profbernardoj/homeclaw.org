@@ -39,3 +39,21 @@ coverage
 tmp
 temp
 *.tmp
+
+# PII / Sensitive files
+MEMORY.md
+memory/
+morpheus-user-persona-strategy.md
+relationships/
+skills/relationships/
+security/bagman/
+skills/bagman/
+shifts/
+.skillguard-ledger.json
+.skillguard-watch-state.json
+.openclaw/
+clawdstrike/
+skills/clawdstrike/
+projects/soulbound-identity/
+crm/
+consulting/

@@ -109,9 +109,89 @@ if [[ "$(uname)" == "Darwin" ]]; then
   else
     echo "   ⚠️  Gateway Guardian not loaded — check manually"
   fi
+elif [[ "$(uname)" == "Linux" ]] && command -v systemctl &>/dev/null; then
+  echo "🐧 Setting up systemd user services..."
+  
+  SYSTEMD_DIR="$HOME/.config/systemd/user"
+  mkdir -p "$SYSTEMD_DIR"
+  
+  # Stop existing services if running
+  systemctl --user stop morpheus-router.service 2>/dev/null || true
+  systemctl --user stop morpheus-proxy.service 2>/dev/null || true
+  systemctl --user stop everclaw-guardian.timer 2>/dev/null || true
+  
+  # Morpheus router service
+  sed \
+    -e "s|__MORPHEUS_DIR__|$MORPHEUS_DIR|g" \
+    -e "s|__HOME__|$HOME|g" \
+    "$SKILL_DIR/templates/systemd/morpheus-router.service" > "$SYSTEMD_DIR/morpheus-router.service"
+  echo "   ✓ Installed morpheus-router.service"
+  
+  # Morpheus proxy service
+  sed \
+    -e "s|__NODE_PATH__|$NODE_PATH|g" \
+    -e "s|__PROXY_DIR__|$PROXY_DIR|g" \
+    -e "s|__MORPHEUS_DIR__|$MORPHEUS_DIR|g" \
+    -e "s|__HOME__|$HOME|g" \
+    "$SKILL_DIR/templates/systemd/morpheus-proxy.service" > "$SYSTEMD_DIR/morpheus-proxy.service"
+  echo "   ✓ Installed morpheus-proxy.service"
+  
+  # Guardian service and timer
+  sed \
+    -e "s|__GUARDIAN_SCRIPT_PATH__|$OPENCLAW_DIR/workspace/scripts/gateway-guardian.sh|g" \
+    -e "s|__OPENCLAW_DIR__|$OPENCLAW_DIR|g" \
+    -e "s|__HOME__|$HOME|g" \
+    "$SKILL_DIR/templates/systemd/everclaw-guardian.service" > "$SYSTEMD_DIR/everclaw-guardian.service"
+  cp "$SKILL_DIR/templates/systemd/everclaw-guardian.timer" "$SYSTEMD_DIR/everclaw-guardian.timer"
+  echo "   ✓ Installed everclaw-guardian.service + timer"
+  
+  # Reload systemd daemon
+  systemctl --user daemon-reload
+  
+  # Enable lingering so services persist after logout
+  if command -v loginctl &>/dev/null; then
+    loginctl enable-linger "$USER" 2>/dev/null || true
+    echo "   ✓ Enabled lingering (services persist after logout)"
+  fi
+  
+  # Start services (router first, then proxy, then guardian timer)
+  systemctl --user start morpheus-router.service
+  echo "   ✓ Started morpheus-router.service"
+  
+  sleep 3  # Give router time to start
+  
+  systemctl --user start morpheus-proxy.service
+  echo "   ✓ Started morpheus-proxy.service"
+  
+  systemctl --user enable everclaw-guardian.timer
+  systemctl --user start everclaw-guardian.timer
+  echo "   ✓ Started everclaw-guardian.timer (2-minute cycle)"
+  
+  sleep 2
+  
+  # Verify services
+  if systemctl --user is-active morpheus-router.service >/dev/null 2>&1; then
+    echo "   ✓ morpheus-router.service is active"
+  else
+    echo "   ⚠️  morpheus-router.service not active — check: journalctl --user -u morpheus-router"
+  fi
+  
+  if systemctl --user is-active morpheus-proxy.service >/dev/null 2>&1; then
+    echo "   ✓ morpheus-proxy.service is active"
+  else
+    echo "   ⚠️  morpheus-proxy.service not active — check: journalctl --user -u morpheus-proxy"
+  fi
+  
+  if systemctl --user is-active everclaw-guardian.timer >/dev/null 2>&1; then
+    echo "   ✓ everclaw-guardian.timer is active"
+  else
+    echo "   ⚠️  everclaw-guardian.timer not active — check: systemctl --user list-timers"
+  fi
 else
-  echo "⚠️  Non-macOS detected. Skipping launchd setup."
-  echo "   For Linux, create systemd units or cron jobs manually."
+  echo "⚠️  Unsupported platform or systemd not available."
+  echo "   Supported: macOS (launchd) or Linux with systemd"
+  echo ""
+  echo "   Manual setup required:"
   echo "   Proxy: node $PROXY_DIR/morpheus-proxy.mjs"
   echo "   Guardian: bash $OPENCLAW_DIR/workspace/scripts/gateway-guardian.sh"
 fi
