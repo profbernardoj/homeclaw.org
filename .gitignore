@@ -3,6 +3,44 @@ node_modules/
 *.log
 CLAUDE.md
 
+# Dependencies
+package-lock.json
+
+# Git
+.git
+.github
+
+# Large directories - EXCLUDE FROM ALL REPOS
+claw-repos/
+data/
+business-finance-tracker/
+
+# Build artifacts
+dist
+build
+
+# OS files
+Thumbs.db
+
+# IDE
+.idea
+.vscode
+*.swp
+
+# Local config
+.env
+.env.local
+*.local
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+tmp
+temp
+*.tmp
+
 # Private memory — NEVER push personal data
 memory/campaigns/
 memory/daily/
@@ -14,7 +52,22 @@ memory/projects/
 memory/reference/
 memory/relationships/
 MEMORY.md
+
+# PII / Sensitive business data - NEVER COMMIT
 shifts/
-mission-control/dashboard-data.json
+.skillguard-ledger.json
+.skillguard-watch-state.json
+.openclaw/
 morpheus-user-persona-strategy.md
+relationships/
+skills/relationships/
+security/bagman/
+skills/bagman/
+projects/soulbound-identity/
+crm/
+consulting/
 scripts/.last-sync.json
+scripts/finance-tracker-x402.mjs
+scripts/asset-tracker.sh
+finance-tracker/
+mission-control/dashboard-data.json
