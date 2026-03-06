@@ -10,19 +10,28 @@ Your agent runs on inference you own: GLM-5, GLM-4.7 Flash, Kimi K2.5, and 30+ m
 
 ## Install
 
+### One-Line Install (Recommended)
+
+```bash
+curl -fsSL https://get.everclaw.xyz | bash
+```
+
+This guided installer:
+- ✅ Checks for required dependencies (curl, git, Node.js, npm, Homebrew, OpenClaw)
+- ✅ Prompts to install any missing dependencies
+- ✅ Clones EverClaw to the right location
+- ✅ Bootstraps a **free GLM-5 starter key** (1,000 requests/day)
+- ✅ Optionally installs the Morpheus proxy-router for P2P inference
+
+### Other Install Methods
+
 **From ClawHub:**
 
 ```bash
 clawhub install everclaw-inference
 ```
 
-**Or one-command installer:**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/profbernardoj/everclaw/main/scripts/install-everclaw.sh | bash
-```
-
-**Or manual clone:**
+**Manual clone:**
 
 ```bash
 git clone https://github.com/profbernardoj/everclaw.git ~/.openclaw/workspace/skills/everclaw
@@ -30,7 +39,20 @@ git clone https://github.com/profbernardoj/everclaw.git ~/.openclaw/workspace/sk
 
 > ⚠️ **Use `everclaw-inference`** — not `everclaw`. The bare `everclaw` slug on ClawHub belongs to a different, unrelated product ("Everclaw Vault"). See [CLAWHUB_WARNING.md](CLAWHUB_WARNING.md).
 
-Then configure your OpenClaw agent:
+### Prerequisites
+
+| Dependency | How to Install | Required For |
+|------------|----------------|--------------|
+| **Homebrew** (macOS) | `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"` | Package manager |
+| **Node.js** (v18+) | `brew install node` | Bootstrap scripts, proxy |
+| **Git** | `brew install git` | Skill installation |
+| **OpenClaw** | `curl -fsSL https://get.openclaw.ai \| bash` | Agent runtime |
+
+**Quick check:** Run `curl -fsSL https://get.everclaw.xyz | bash -s -- --check-only` to verify your environment.
+
+### After Installation
+
+Configure your OpenClaw agent:
 
 ```bash
 # Easiest: Gateway only (no local proxy needed)
@@ -40,7 +62,7 @@ node ~/.openclaw/workspace/skills/everclaw/scripts/setup.mjs --template gateway-
 node ~/.openclaw/workspace/skills/everclaw/scripts/setup.mjs --key YOUR_KEY --apply --test --restart
 ```
 
-Get a free API key at [app.mor.org](https://app.mor.org). Run without `--apply` first to preview changes.
+Get your own API key at [app.mor.org](https://app.mor.org). Run without `--apply` first to preview changes.
 
 **Want local P2P inference too?** Set up the wallet, proxy, and guardian:
 
