@@ -1,4 +1,4 @@
-# Prompt Guard Configuration
+# Prompt Guard v3.2.0 Configuration
 # Copy to config.yaml and customize for your deployment
 
 prompt_guard:
@@ -8,11 +8,22 @@ prompt_guard:
   # - high: Aggressive detection, may have false positives
   # - paranoid: Maximum security, flags anything remotely suspicious
   sensitivity: medium
+
+  # Owner bypass: Skip ALL scanning for trusted users (zero overhead)
+  # When enabled, messages from owner_ids bypass pattern scanning entirely.
+  owner_bypass_scanning: false
   
   # Owner user IDs (these users bypass most restrictions)
   # Add your Telegram/Discord/etc user IDs here
   owner_ids:
     - "46291309"  # Example: Telegram user ID
+  
+  # Canary tokens
+  # Plant these strings in your system prompt. If they appear in user
+  # messages or LLM outputs, it confirms system prompt extraction.
+  canary_tokens:
+    # - "CANARY:7f3a9b2e"
+    # - "SENTINEL:a4c8d1f0"
   
   # Actions to take at each severity level
   # Options: allow, log, warn, block, block_notify
@@ -31,8 +42,34 @@ prompt_guard:
   # Security event logging
   logging:
     enabled: true
-    path: memory/security-log.md  # Where to write logs
+    path: memory/security-log.md  # Markdown log path
     include_message: true  # Include message content (privacy consideration)
+    
+    # Structured JSON logging
+    # Set format to "json" for SIEM-compatible JSONL output
+    format: markdown       # "markdown" (default) or "json"
+    json_path: memory/security-log.jsonl
+    hash_chain: false      # Enable SHA-256 hash chain for tamper detection
+
+  # =========================================================================
+  # API-Enhanced Mode (NEW in v3.2.0 — optional, off by default)
+  # =========================================================================
+  # Prompt Guard works 100% offline with 577+ bundled patterns.
+  # Enable the API for early-access + premium patterns and threat intelligence.
+  #
+  # Three tiers:
+  #   Core    — same 577+ patterns as offline (always available)
+  #   Early   — newest patterns, API users get 7-14 days before open-source
+  #   Premium — advanced detection (DNS tunneling, steganography, etc.)
+  #
+  # Beta key is built in — API works out of the box.
+  # Override with your own key if you have one.
+  # Disable with: enabled: false (or PG_API_ENABLED=false)
+  api:
+    enabled: true           # API on by default (beta key built in)
+    key: null               # Default: built-in beta key (override with PG_API_KEY env var)
+    reporting: false         # Opt-in: send anonymous threat data (hashes only)
+    url: null               # Default: https://pg-secure-api.vercel.app
   
   # Custom patterns (regex)
   custom_patterns:
@@ -45,6 +82,14 @@ prompt_guard:
     allowed:
       - "legitimate_use_case"
       - "known_safe_phrase"
+  
+  # HiveFence threat intelligence network
+  hivefence:
+    enabled: true
+    api_url: https://hivefence-api.seojoon-kim.workers.dev/api/v1
+    auto_report: true      # Report HIGH+ detections
+    auto_fetch: true       # Fetch patterns on startup
+    cache_path: ~/.clawdbot/hivefence_cache.json
   
   # Notification settings
   notifications:

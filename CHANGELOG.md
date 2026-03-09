@@ -2,6 +2,21 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.3.8] - 2026-03-08
+
+### Changed
+- **PromptGuard upgraded to v3.3.0**
+  - Full sync from `seojoonkim/prompt-guard` with our external content detection PR
+  - New package structure (`prompt_guard/` module with scripts/ backward compatibility)
+  - SHIELD.md standard compliance (11 threat categories)
+  - **External Content Detection** — identifies injection from GitHub issues, PRs, emails, Slack, Discord, social media
+  - **Multi-language urgency patterns** — EN/KO/JA/ZH urgency + command detection
+  - **Context-aware severity elevation** — external source + instruction = CRITICAL
+  - ~130 new patterns for external content injection attacks
+  - Upstream PR: https://github.com/seojoonkim/prompt-guard/pull/18
+
+---
+
 ## [2026.3.6] - 2026-03-05
 
 ### Added

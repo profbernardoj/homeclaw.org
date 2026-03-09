@@ -71,3 +71,4 @@ scripts/finance-tracker-x402.mjs
 scripts/asset-tracker.sh
 finance-tracker/
 mission-control/dashboard-data.jsonscripts/finance-tracker.sh
+*.plist
