@@ -128,6 +128,54 @@ cmd_list() {
   echo "$RESPONSE" | jq . 2>/dev/null || echo "$RESPONSE"
 }
 
+# Status: balance + session summary
+cmd_status() {
+  get_auth
+
+  echo "Morpheus Session Status"
+  echo "======================"
+  echo ""
+
+  # Balance
+  BALANCE=$(curl -s -u "admin:$COOKIE_PASS" "${API_BASE}/blockchain/balance" 2>/dev/null || echo "{}")
+  MOR_WEI=$(echo "$BALANCE" | jq -r '.mor // .MOR // "0"' 2>/dev/null || echo "0")
+  ETH_WEI=$(echo "$BALANCE" | jq -r '.eth // .ETH // "0"' 2>/dev/null || echo "0")
+
+  if [[ "$MOR_WEI" != "0" && "$MOR_WEI" != "null" ]]; then
+    MOR_HUMAN=$(echo "$MOR_WEI" | awk '{printf "%.4f", $1 / 1000000000000000000}')
+    echo "  MOR: $MOR_HUMAN"
+  else
+    echo "  MOR: 0"
+  fi
+
+  if [[ "$ETH_WEI" != "0" && "$ETH_WEI" != "null" ]]; then
+    ETH_HUMAN=$(echo "$ETH_WEI" | awk '{printf "%.6f", $1 / 1000000000000000000}')
+    echo "  ETH: $ETH_HUMAN"
+  else
+    echo "  ETH: 0"
+  fi
+
+  echo ""
+
+  # Sessions
+  SESSIONS=$(curl -s -u "admin:$COOKIE_PASS" "${API_BASE}/blockchain/sessions" 2>/dev/null || echo "[]")
+  SESSION_COUNT=$(echo "$SESSIONS" | jq -r 'if type == "array" then length elif type == "object" and has("sessions") then .sessions | length else 0 end' 2>/dev/null | tr -d '[:space:]')
+  SESSION_COUNT="${SESSION_COUNT:-0}"
+
+  echo "  Active sessions: $SESSION_COUNT"
+
+  if [[ "$SESSION_COUNT" -gt 0 ]]; then
+    echo ""
+    echo "$SESSIONS" | jq -r '
+      (if type == "array" then . elif has("sessions") then .sessions else [] end) |
+      .[] |
+      "  - \(.Id // .id // .sessionId // "??") (\(.ModelAgentId // .modelAgentId // .modelId // "??"))"
+    ' 2>/dev/null || true
+  fi
+
+  echo ""
+}
+
 # Main
 ACTION="${1:-help}"
 
@@ -143,6 +191,9 @@ case "$ACTION" in
   list)
     cmd_list
     ;;
+  status)
+    cmd_status
+    ;;
   *)
     echo "Morpheus Session Manager"
     echo ""
@@ -150,6 +201,7 @@ case "$ACTION" in
     echo "  session.sh open <model_name> [duration_seconds]   Open a new session"
     echo "  session.sh close <session_id>                     Close a session"
     echo "  session.sh list                                   List active sessions"
+    echo "  session.sh status                                 Balance + session summary"
     echo ""
     echo "Available models:"
     for m in $KNOWN_MODELS; do

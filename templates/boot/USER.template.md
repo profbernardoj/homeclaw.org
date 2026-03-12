@@ -10,10 +10,10 @@
      Your agent will read this at the start of every session.
      ═══════════════════════════════════════════════════════════════ -->
 
-- **Name:** <!-- YOUR_NAME -->
-- **What to call them:** <!-- First name or preferred name -->
+- **Name:** __USER_NAME__
+- **What to call them:** __USER_DISPLAY_NAME__
 - **Pronouns:** <!-- optional -->
-- **Timezone:** <!-- e.g., America/New_York, Europe/London -->
+- **Timezone:** __USER_TIMEZONE__
 - **Notes:** <!-- Quick facts: phone, primary contact method, etc. -->
 
 ## Context

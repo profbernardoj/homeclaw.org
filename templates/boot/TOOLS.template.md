@@ -65,6 +65,10 @@ Skills define _how_ tools work. This file is for _your_ specifics — the stuff 
      - **Host:** my-server.example.com
      - **Auth:** SSH key (added to agent) -->
 
+### Morpheus Inference
+- **Proxy:** http://127.0.0.1:__MORPHEUS_PROXY_PORT__
+- **Default model:** __DEFAULT_MODEL__
+
 ---
 
 ## Infrastructure Notes

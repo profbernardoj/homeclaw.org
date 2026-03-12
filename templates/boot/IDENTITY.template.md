@@ -15,9 +15,9 @@
 <!-- Pick something meaningful. Examples:
      - A character from a book, film, or story you love
      - A historical figure whose values you admire
-     - A word or concept that captures your agent's role
-     
-     **Your Agent Name Here** -->
+     - A word or concept that captures your agent's role -->
+
+- **Name:** __AGENT_NAME__
 
 ## Creature
 

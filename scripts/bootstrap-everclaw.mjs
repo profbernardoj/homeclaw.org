@@ -364,7 +364,8 @@ async function testKey(apiKey) {
     }
     
     const content = data.choices?.[0]?.message?.content || '';
-    return { ok: true, model: data.model, content: content.trim() };
+    const model = data.model || data.choices?.[0]?.model || 'glm-5';
+    return { ok: true, model, content: content.trim() };
   } catch (e) {
     if (e.signal === 'SIGTERM' || e.killed) {
       return { ok: false, error: 'Request timed out' };
@@ -495,7 +496,7 @@ async function cmdStatus() {
     console.log('\n  Testing connectivity...');
     const test = await testKey(key.api_key);
     if (test.ok) {
-      console.log(`  ✓ Online — ${test.model}\n`);
+      console.log(`  ✓ Online — ${test.model || 'connected'}\n`);
     } else {
       console.log(`  ❌ ${test.error}\n`);
     }
@@ -519,8 +520,8 @@ async function cmdTest() {
   
   if (test.ok) {
     console.log(`\n  ✓ Success!`);
-    console.log(`  Model: ${test.model}`);
-    console.log(`  Response: "${test.content}"\n`);
+    console.log(`  Model: ${test.model || 'glm-5'}`);
+    console.log(`  Response: "${test.content || '(empty)'}"\n`);
   } else {
     console.log(`\n  ❌ Failed: ${test.error}\n`);
     process.exit(1);

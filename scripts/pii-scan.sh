@@ -101,6 +101,14 @@ build_builtin_patterns() {
     '172\.(1[6-9]|2[0-9]|3[01])\.[0-9]{1,3}\.[0-9]{1,3}'  # Class B private
   )
 
+  # Phone numbers (international and US formats)
+  patterns+=(
+    '\+1[0-9]{10}'                                # US/CA E.164 (+14155551234)
+    '\+[2-9][0-9]{7,14}'                          # International E.164
+    '\([0-9]{3}\)[[:space:]]*[0-9]{3}-[0-9]{4}'  # US (415) 555-1234
+    '[0-9]{3}-[0-9]{3}-[0-9]{4}'                  # US 415-555-1234
+  )
+
   # SSN (US)
   patterns+=(
     '[0-9]{3}-[0-9]{2}-[0-9]{4}'                 # SSN format

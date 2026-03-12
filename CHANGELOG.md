@@ -2,6 +2,21 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.3.14] - 2026-03-12
+
+### Fixed
+- **BUG-002** — balance.sh session count parsing (jq newline in arithmetic)
+- **BUG-003** — bootstrap-everclaw --status/--test showing undefined values
+- **BUG-004** — session.sh missing `status` command (balance + session summary)
+- **BUG-006** — pii-scan.sh now detects phone numbers in --text and stdin modes (4 patterns)
+- **BUG-007** — Boot templates now include 7 `__PLACEHOLDER__` tokens for automated setup
+- **BUG-009** — Website footer release link points to valid v2026.3.13 tag
+- **BUG-010** — Website "What's New" section updated from v0.9.x to 2026.3.x scheme
+- **BUG-011** — SmartAgent gateway-guardian synced to v5 (was stale v4)
+- **BUG-013** — Dockerfile versions updated (OpenClaw v2026.3.2, EverClaw 2026.3.13)
+
+---
+
 ## [2026.3.13] - 2026-03-11
 
 ### Fixed

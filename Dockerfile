@@ -12,7 +12,7 @@
 #   docker build -t ghcr.io/everclaw/everclaw:latest .
 #
 # Build with specific OpenClaw version:
-#   docker build --build-arg OPENCLAW_VERSION=v2026.2.22 -t ghcr.io/everclaw/everclaw:latest .
+#   docker build --build-arg OPENCLAW_VERSION=v2026.3.2 -t ghcr.io/everclaw/everclaw:latest .
 #
 # Run:
 #   docker run -d \
@@ -34,7 +34,7 @@
 # Pin OpenClaw version for reproducible builds.
 # Update this when upgrading to a new release.
 
-ARG OPENCLAW_VERSION=v2026.2.22
+ARG OPENCLAW_VERSION=v2026.3.2
 
 FROM node:22-bookworm AS openclaw-builder
 
@@ -152,7 +152,7 @@ RUN chmod +x /app/docker-entrypoint.sh
 
 # ─── Environment ──────────────────────────────────────────────────────────────
 
-ARG EVERCLAW_VERSION=2026.2.23
+ARG EVERCLAW_VERSION=2026.3.13
 ENV EVERCLAW_VERSION=${EVERCLAW_VERSION}
 ENV NODE_ENV=production
 ENV EVERCLAW_PROXY_PORT=8083

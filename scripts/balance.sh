@@ -59,7 +59,8 @@ echo ""
 echo "📋 Active Sessions:"
 SESSIONS=$(curl -s -u "admin:$COOKIE_PASS" "${API_BASE}/blockchain/sessions" 2>/dev/null || echo "[]")
 
-SESSION_COUNT=$(echo "$SESSIONS" | jq 'if type == "array" then length elif type == "object" and has("sessions") then .sessions | length else 0 end' 2>/dev/null || echo "0")
+SESSION_COUNT=$(echo "$SESSIONS" | jq -r 'if type == "array" then length elif type == "object" and has("sessions") then .sessions | length else 0 end' 2>/dev/null | tr -d '[:space:]')
+SESSION_COUNT="${SESSION_COUNT:-0}"
 
 if [[ "$SESSION_COUNT" -gt 0 ]]; then
   echo "   Count: $SESSION_COUNT"
