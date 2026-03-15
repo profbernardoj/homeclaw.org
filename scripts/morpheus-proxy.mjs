@@ -27,7 +27,14 @@ const ROUTER_URL = process.env.MORPHEUS_ROUTER_URL || "http://localhost:8082";
 const COOKIE_PATH = process.env.MORPHEUS_COOKIE_PATH || path.join(process.env.HOME, "morpheus/.cookie");
 const SESSION_DURATION = parseInt(process.env.MORPHEUS_SESSION_DURATION || "604800", 10); // 7 days default
 const RENEW_BEFORE_SEC = parseInt(process.env.MORPHEUS_RENEW_BEFORE || "3600", 10); // renew 1 hour before expiry
-const PROXY_API_KEY = process.env.MORPHEUS_PROXY_API_KEY || "morpheus-local"; // bearer token OpenClaw sends
+// === STAGE 1: STRONG AUTH ENFORCEMENT (no weak default) ===
+const PROXY_API_KEY = process.env.MORPHEUS_PROXY_API_KEY;
+if (!PROXY_API_KEY || PROXY_API_KEY === "morpheus-local") {
+  console.error("[morpheus-proxy] ❌ MORPHEUS_PROXY_API_KEY environment variable is required");
+  console.error("  Export a strong key before starting the proxy.");
+  process.exit(1);
+}
+console.log(`[morpheus-proxy] ✅ Strong auth enabled`);
 
 // --- P0: Balance Monitoring & Fallback ---
 const RPC_URL = process.env.EVERCLAW_RPC || "https://base-mainnet.public.blastapi.io";
@@ -97,7 +104,71 @@ async function refreshModelMap() {
 }
 
 // --- State ---
-const sessions = new Map(); // modelId -> { sessionId, expiresAt, stakeMor? }
+// === STAGE 4: PERSISTENT SESSIONS (runtime saves + crash resilience) ===
+const SESSIONS_FILE = path.join(process.env.HOME, ".morpheus/sessions.json");
+let sessions = new Map();
+
+function loadSessions() {
+  try {
+    if (fs.existsSync(SESSIONS_FILE)) {
+      const data = JSON.parse(fs.readFileSync(SESSIONS_FILE, "utf-8"));
+      sessions = new Map(Object.entries(data));
+      console.log(`[morpheus-proxy] ✅ Loaded ${sessions.size} persistent sessions`);
+    }
+  } catch (e) {
+    console.warn(`[morpheus-proxy] Could not load sessions: ${e.message}`);
+  }
+}
+
+function saveSessions() {
+  try {
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(Object.fromEntries(sessions), null, 2));
+  } catch (e) {
+    console.warn(`[morpheus-proxy] Failed to save sessions: ${e.message}`);
+  }
+}
+
+loadSessions();
+
+// === STAGE 5: SECURITY MIDDLEWARE (rate limit + body size + smart cleanup) ===
+const RATE_LIMIT_WINDOW_MS = 60000;
+const RATE_LIMIT_MAX_REQ = 30;
+const MAX_BODY_SIZE = 1024 * 1024;
+const rateLimitMap = new Map();
+
+function getClientIP(req) {
+  return (req.headers["x-forwarded-for"] || "").split(",")[0] || req.socket.remoteAddress || "unknown";
+}
+
+function securityMiddleware(req, res) {
+  const contentLength = parseInt(req.headers["content-length"] || "0", 10);
+  if (req.method === "POST" && contentLength > MAX_BODY_SIZE) {
+    res.writeHead(413, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Payload Too Large" }));
+    return false;
+  }
+
+  const ip = getClientIP(req);
+  const now = Date.now();
+  let record = rateLimitMap.get(ip) || { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+  if (now > record.resetAt) record = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+  record.count++;
+  rateLimitMap.set(ip, record);
+
+  if (rateLimitMap.size > 800) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+  }
+
+  if (record.count > RATE_LIMIT_MAX_REQ) {
+    res.writeHead(429, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Too Many Requests" }));
+    return false;
+  }
+  return true;
+}
+
 let morBalance = null; // Cached MOR balance
 let morBalanceLastCheck = 0;
 let consecutiveFailures = 0; // Track P2P failures for fallback
@@ -106,12 +177,24 @@ let fallbackUntil = 0; // Timestamp when to retry P2P
 
 // --- Helpers ---
 
+// === STAGES 2+3: CACHED COOKIE (original function fully replaced) ===
+let cachedBasicAuth = null;
+let cookieLastRead = 0;
+const COOKIE_CACHE_MS = 60000;
+
 function getBasicAuth() {
+  const now = Date.now();
+  if (cachedBasicAuth && now - cookieLastRead < COOKIE_CACHE_MS) {
+    return cachedBasicAuth;
+  }
   try {
     const cookie = fs.readFileSync(COOKIE_PATH, "utf-8").trim();
-    return "Basic " + Buffer.from(cookie).toString("base64");
+    cachedBasicAuth = "Basic " + Buffer.from(cookie).toString("base64");
+    cookieLastRead = now;
+    return cachedBasicAuth;
   } catch (e) {
     console.error(`[morpheus-proxy] Failed to read cookie file: ${e.message}`);
+    cachedBasicAuth = null;
     return null;
   }
 }
@@ -349,6 +432,7 @@ async function openSession(modelId) {
   const sessionId = data.sessionID;
   const expiresAt = Date.now() + (SESSION_DURATION - RENEW_BEFORE_SEC) * 1000;
   sessions.set(modelId, { sessionId, expiresAt });
+  saveSessions(); // ← runtime save
   console.log(`[morpheus-proxy] Session opened: ${sessionId} (expires ~${new Date(expiresAt).toISOString()})`);
   return sessionId;
 }
@@ -601,6 +685,7 @@ async function handleChatCompletions(req, res, body) {
     if (isSessionError(result.status, bodyStr)) {
       console.log(`[morpheus-proxy] Session error detected (${result.status}), will retry with new session`);
       sessions.delete(modelId); // invalidate cached session
+      saveSessions(); // ← runtime save
       attempt1Error = `session_invalid (${result.status})`;
       // Fall through to retry below
     } else {
@@ -620,6 +705,7 @@ async function handleChatCompletions(req, res, body) {
     // Connection error — might be transient, try to invalidate session and retry
     console.error(`[morpheus-proxy] Attempt 1 failed: ${e.message}`);
     sessions.delete(modelId);
+    saveSessions(); // ← runtime save
     p2pFailure();
     attempt1Error = e.message;
   }
@@ -741,6 +827,9 @@ function checkAuth(req) {
 // --- Server ---
 
 const server = http.createServer((req, res) => {
+  // === STAGE 5: SECURITY MIDDLEWARE FIRST (before auth) ===
+  if (!securityMiddleware(req, res)) return;
+
   // Auth check
   if (!checkAuth(req)) {
     res.writeHead(401, { "Content-Type": "application/json" });
@@ -824,10 +913,12 @@ server.on("error", (e) => {
 
 // Graceful shutdown
 process.on("SIGTERM", () => {
+  saveSessions(); // ← graceful save
   console.log("[morpheus-proxy] Shutting down...");
   server.close(() => process.exit(0));
 });
 process.on("SIGINT", () => {
+  saveSessions(); // ← graceful save
   console.log("[morpheus-proxy] Shutting down...");
   server.close(() => process.exit(0));
 });

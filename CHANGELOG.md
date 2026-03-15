@@ -2,6 +2,15 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.3.18] - 2026-03-15
+
+### Security — Phase 1 Audit Hardening (morpheus-proxy.mjs)
+- **CRITICAL: Auth bypass removed** — `PROXY_API_KEY` no longer defaults to `"morpheus-local"`. Proxy now requires a strong key via env var or exits on startup.
+- **Cookie caching** — `getBasicAuth()` now caches the `.cookie` file read for 60 seconds instead of reading disk on every request. Cache invalidated on error.
+- **Persistent sessions** — Sessions saved to `~/.morpheus/sessions.json` on every mutation (`set`/`delete`) and on graceful shutdown (SIGTERM/SIGINT). Loaded on startup. Proxy restarts no longer lose active sessions.
+- **Rate limiting + body size protection** — New `securityMiddleware` runs before auth: 30 req/min per IP, 1MB body limit, smart cleanup at 800+ entries to prevent memory leaks.
+- File grew from 833 → 924 lines. Zero new dependencies. All 36 existing tests pass.
+
 ## [2026.3.16] - 2026-03-12
 
 ### Changed
