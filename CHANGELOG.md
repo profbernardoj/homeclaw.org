@@ -2,6 +2,19 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.3.21] - 2026-03-16
+
+### Security
+- **safe-transfer.mjs**: Add `simulateContract` before `writeContract` (catches reverts before gas spend)
+- **safe-transfer.mjs**: Add interactive confirmation prompt before on-chain execution
+- **safe-transfer.mjs**: Remove no-op signature packing code (dead variables `sortedSignature`, `encodedSignature`)
+- **safe-transfer.mjs**: Replace `encodedSignature` with `signature` in writeContract args (fixes potential ReferenceError)
+- **safe-transfer.mjs**: Replace hardcoded `gas: 200000n` with dynamic estimation (`gas: undefined`)
+
+### Process
+- Phase 2 Stage 1 — audited by Claude 4.6, tested 5/5 PASS, PII scan PASS
+- SOP-001 pipeline with dedicated agents (Architect, Coder, Auditor, Tester, PII Checker, Deployer)
+
 ## [2026.3.20] - 2026-03-15
 
 ### Added
