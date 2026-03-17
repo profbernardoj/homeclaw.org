@@ -12,6 +12,7 @@
 | 001 | Development & Deployment | 2026-03-08 |
 | 002 | Morpheus P2P Session Management | 2026-03-09 |
 | 003 | XMTP Agent-to-Agent Communication | 2026-03-14 |
+| 004 | Marketing & Sales Pipeline | 2026-03-17 |
 
 ---
 
@@ -735,3 +736,242 @@ The `xmtp-comms-guard` skill at `skills/xmtp-comms-guard/` provides the full V3 
 6. **`createDmWithIdentifier` vs `createDm`** — The former takes an Ethereum address (Identifier object), the latter takes an inbox ID string.
 7. **V3 structured messages kill injections early** — Zod validation at pipeline entry rejects 90%+ of attack vectors before any LLM processing.
 8. **EIP-191 canonical format matters** — Challenge must be deterministic string (newline-separated key:value pairs). Any deviation breaks signature verification.
+
+## SOP-004: Marketing & Sales Pipeline
+
+**Version:** 1.0
+**Created:** 2026-03-17
+**Purpose:** Define the agent-driven marketing and sales pipeline that moves users through the EverClaw ownership funnel — from discovery to full hardware sovereignty.
+
+---
+
+### Overview
+
+The EverClaw sales funnel has 5 stages. Each stage is supported by dedicated AI agents running on GLM-5 (Morpheus). All agents operate in **draft-and-approve** mode — they produce drafts, David reviews and approves before anything goes external.
+
+**Core Message:** "Own your AI agent. Hardware, data, inference — all yours."
+
+**Language Rules:**
+- NEVER say "free inference" → say "own your inference"
+- Morpheus = ownership, not rental
+- MOR is staked, not spent — all staked MOR returns after session close
+- Don't highlight Llama 3.3
+
+---
+
+### Funnel Stages
+
+| Stage | Name | Goal | External Lead |
+|-------|------|------|---------------|
+| 1 | **Discovery & Sales** | User finds a flavor site, gets hooked on the ownership message | David |
+| 2 | **VM Setup** | User gets EverClaw running in a hosted VM — zero hardware needed | StarkClaw / TBD |
+| 3 | **Inference Access** | User connects to decentralized inference via Morpheus | Thomas Borrel / BasedAI |
+| 4 | **Hardware Purchase** | User buys a ClawBox — owns their compute | Eric Bravick / IronHill |
+| 5 | **DIY Setup** | User sets up their own hardware from scratch | Scott B. |
+
+**Entry points are non-linear.** Users can enter at any stage:
+- Stage 1: New user discovering AI agents
+- Stage 2: User wants to try before buying hardware
+- Stage 5: User already has dedicated hardware
+
+---
+
+### Agent Assignments
+
+| Agent ID | Agent Name | Model | Stages | Role | Signal Group ID |
+|----------|------------|-------|--------|------|-----------------|
+| `content-writer` | Content Writer | morpheus/glm-5 | 1 | Write blog posts, landing page copy, X threads, flavor-specific marketing materials for all 28 flavors. Takes persona and flavor context as input. | *(TBD — create first)* |
+| `social-manager` | Social Manager | morpheus/glm-5 | 1 | Draft social posts for X/Farcaster/Discord/Telegram. Track engagement, draft responses to mentions, coordinate influencer outreach. | *(TBD)* |
+| `lead-tracker` | Lead Tracker | morpheus/glm-5 | 1–2 | Track inbound interest (GitHub stars, website visits, install counts, DMs). Maintain CRM data. Score and qualify leads. | *(TBD)* |
+| `onboarding-agent` | Onboarding Agent | morpheus/glm-5 | 2, 5 | Guide new users through VM setup or DIY hardware setup. Answer setup questions. Escalate blockers. Track conversion from signup → running agent. | *(TBD)* |
+| `inference-support` | Inference Support | morpheus/glm-5 | 3 | Help users connect to Morpheus inference. Troubleshoot MOR staking, proxy-router setup, model selection. Monitor inference health. | *(TBD)* |
+| `sales-closer` | Sales Closer | morpheus/glm-5 | 3–4 | Nurture users from VM → hardware purchase. Handle objections. Track pipeline from trial → ClawBox order. Coordinate with IronHill. | *(TBD)* |
+| `community-manager` | Community Manager | morpheus/glm-5 | 1–5 | Manage Discord/Telegram communities per flavor. Welcome new members, answer FAQs, escalate issues, run engagement campaigns. | *(TBD)* |
+| `analytics-agent` | Analytics Agent | morpheus/glm-5 | 1–5 | Track funnel metrics across all stages: conversion rates, drop-off points, install counts, active users, MOR staking growth. Produce weekly reports. | *(TBD)* |
+
+**Total new agents: 8**
+
+---
+
+### Agent Workspaces
+
+Each agent follows the same workspace pattern as SOP-001:
+
+| Agent | Workspace | Agent Dir |
+|-------|-----------|-----------|
+| content-writer | `/Users/bernardo/.openclaw/workspace-content-writer/` | `/Users/bernardo/.openclaw/agents/content-writer/agent/` |
+| social-manager | `/Users/bernardo/.openclaw/workspace-social-manager/` | `/Users/bernardo/.openclaw/agents/social-manager/agent/` |
+| lead-tracker | `/Users/bernardo/.openclaw/workspace-lead-tracker/` | `/Users/bernardo/.openclaw/agents/lead-tracker/agent/` |
+| onboarding-agent | `/Users/bernardo/.openclaw/workspace-onboarding-agent/` | `/Users/bernardo/.openclaw/agents/onboarding-agent/agent/` |
+| inference-support | `/Users/bernardo/.openclaw/workspace-inference-support/` | `/Users/bernardo/.openclaw/agents/inference-support/agent/` |
+| sales-closer | `/Users/bernardo/.openclaw/workspace-sales-closer/` | `/Users/bernardo/.openclaw/agents/sales-closer/agent/` |
+| community-manager | `/Users/bernardo/.openclaw/workspace-community-manager/` | `/Users/bernardo/.openclaw/agents/community-manager/agent/` |
+| analytics-agent | `/Users/bernardo/.openclaw/workspace-analytics-agent/` | `/Users/bernardo/.openclaw/agents/analytics-agent/agent/` |
+
+---
+
+### Pipeline Flow
+
+```
+                    ┌──────────────┐
+                    │content-writer│  Stage 1: Content creation
+                    │social-manager│  → Drives discovery across 28 flavors
+                    └──────┬───────┘
+                           │ user discovers flavor site
+                           ▼
+                    ┌──────────────┐
+                    │ lead-tracker │  Stage 1→2: Capture & qualify
+                    └──────┬───────┘
+                           │ qualified lead
+                           ▼
+                    ┌────────────────┐
+                    │onboarding-agent│  Stage 2: VM setup
+                    └──────┬─────────┘
+                           │ user running on VM
+                           ▼
+                    ┌─────────────────┐
+                    │inference-support│  Stage 3: Connect to Morpheus
+                    └──────┬──────────┘
+                           │ user staking MOR
+                           ▼
+                    ┌──────────────┐
+                    │ sales-closer │  Stage 3→4: Convert to hardware
+                    └──────┬───────┘
+                           │ ClawBox order
+                           ▼
+                    ┌────────────────────┐
+                    │ onboarding-agent   │  Stage 5: Hardware setup
+                    │ (reused for DIY)   │
+                    └────────────────────┘
+
+    ─── Across all stages ──────────────────────────────
+    ┌───────────────────┐  ┌─────────────────┐
+    │ community-manager │  │ analytics-agent  │
+    └───────────────────┘  └─────────────────┘
+```
+
+---
+
+### Operating Model: Draft & Approve
+
+All agents operate in draft-and-approve mode. Nothing goes external without David's explicit approval.
+
+#### Workflow
+
+1. **Bernardo (main agent)** receives task from David or triggers from pipeline events
+2. **Dispatches to appropriate agent** via `sessions_send`
+3. **Agent produces draft** (content, post, report, response)
+4. **Draft sent to David** via Signal for review
+5. **David approves, edits, or rejects**
+6. **If approved:** Bernardo executes (publishes post, sends email, updates CRM, etc.)
+7. **If rejected:** Agent revises based on feedback
+
+#### Escalation Path
+
+- Agent can't complete task → escalates to Bernardo
+- Bernardo can't resolve → escalates to David
+- Urgent issues (security, PR crisis) → immediate David notification
+
+---
+
+### The 28 Flavors (Content Writer Context)
+
+The content-writer agent serves all 28 flavors from a single instance. At task time, it receives:
+
+1. **Flavor name and domain** (e.g., BitcoinClaw / bitcoinclaw.ai)
+2. **Target persona** (e.g., BTC holders, sovereignty-focused)
+3. **Content type** (blog post, X thread, landing page, etc.)
+4. **Messaging hooks** specific to that persona
+
+Flavor categories for content strategy:
+
+| Category | Flavors | Messaging Angle |
+|----------|---------|-----------------|
+| **Protocol/Chain** | BitcoinClaw, EthereumClaw, SolanaClaw, BaseClaw, ArbClaw, MorpheusClaw | Self-custody meets AI — own your inference like you own your keys |
+| **Model-Specific** | GLMClaw, GrokClaw, KimiClaw, LlamaClaw, MiniMaxClaw, DeepSeekClaw | Your favorite model, your hardware, no API landlord |
+| **Platform** | AndroidClaw, AppleClaw, LinuxClaw, WindowsClaw | Native AI agent for your OS — no cloud dependency |
+| **Use Case** | EmailClaw, BookingClaw, BriefingClaw, InvestClaw, FamilyClaw, HomeClaw, OfficeClaw, FriendClaw, FamilyOfficeClaw, VCClaw | AI that works for you, not a subscription service |
+| **Entry Point** | InstallOpenClaw | Generic funnel — "get started with your own AI agent" |
+
+---
+
+### Inter-Agent Communication
+
+Same pattern as SOP-001:
+
+- **Primary:** `sessions_send` (internal, low-latency)
+- **Secondary:** Signal groups (external, human-visible, one per agent)
+- **Future:** XMTP transport layer (decentralized, SOP-003)
+
+---
+
+### Metrics & Reporting (Analytics Agent)
+
+Weekly report to David covering:
+
+| Metric | Source |
+|--------|--------|
+| GitHub stars / forks per flavor | GitHub API |
+| Install counts (`curl \| bash` hits) | CloudFlare analytics on get.everclaw.xyz |
+| Active users (inference sessions) | Morpheus proxy logs |
+| MOR staking growth | On-chain data |
+| Content published (posts, threads, blogs) | Internal tracking |
+| Community growth (Discord/Telegram members) | Platform APIs |
+| Funnel conversion rates (stage → stage) | Cross-agent data |
+| Lead pipeline status | Lead tracker CRM |
+
+---
+
+### Build Order
+
+Agents will be created one at a time, tested, and connected to Signal before moving to the next:
+
+| Priority | Agent | Rationale |
+|----------|-------|-----------|
+| 1 | `content-writer` | Highest impact — drives top-of-funnel for all 28 flavors |
+| 2 | `analytics-agent` | Measure before optimizing — need baseline metrics |
+| 3 | `social-manager` | Amplify content-writer output across platforms |
+| 4 | `community-manager` | Engage and retain users who discover via content |
+| 5 | `lead-tracker` | Track and qualify inbound interest |
+| 6 | `onboarding-agent` | Guide users through setup (VM + hardware) |
+| 7 | `inference-support` | Technical support for Morpheus connection |
+| 8 | `sales-closer` | Convert trial users to hardware buyers |
+
+---
+
+### Agent Creation Checklist (per agent)
+
+For each new agent, follow these steps:
+
+- [ ] Create agent config in `/Users/bernardo/.openclaw/agents/<agent-id>/agent/`
+- [ ] Write `SOUL.md` with agent identity, role, and constraints
+- [ ] Write `USER.md` pointing to David as the human
+- [ ] Write `AGENTS.md` with workspace conventions
+- [ ] Set model to `morpheus/glm-5` in agent config
+- [ ] Create workspace at `/Users/bernardo/.openclaw/workspace-<agent-id>/`
+- [ ] Create Signal group and bind to agent
+- [ ] Test agent responds via Signal
+- [ ] Update this SOP with Signal Group ID
+- [ ] Log creation in `memory/daily/YYYY-MM-DD.md`
+
+---
+
+### Dependencies on Other SOPs
+
+| Dependency | SOP | Notes |
+|------------|-----|-------|
+| Agent deployment infra | SOP-001 | Agent creation patterns, workspace layout |
+| Inference access | SOP-002 | Agents use Morpheus P2P for inference |
+| Agent-to-agent comms | SOP-003 | Future: XMTP for decentralized inter-agent messaging |
+
+---
+
+### Lessons Learned
+
+*(To be populated as agents are deployed and the pipeline matures)*
+
+---
+
+### History
+
+- **Mar 17, 2026** — SOP-004 created. 8 agents defined. Build order prioritized. Draft-and-approve workflow. All agents on GLM-5 (Morpheus).
