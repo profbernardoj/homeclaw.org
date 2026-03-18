@@ -32,7 +32,9 @@ describe('Router Module', () => {
   it('writes DATA message to inbox with correlationId as filename', async () => {
     const v6 = makeValidDataMessage({ correlationId: 'test-uuid-data-001' });
     const ctx = {
+      tier: 3,
       validatedV6: v6,
+      peerAddress: '0xsender',
       message: { senderInboxId: '0xsender' },
       conversation: { id: 'conv-test' }
     };
@@ -57,7 +59,9 @@ describe('Router Module', () => {
     const v6 = makeValidDataMessage();
     delete v6.correlationId;
     const ctx = {
+      tier: 3,
       validatedV6: v6,
+      peerAddress: '0xsender',
       message: { senderInboxId: '0xsender' },
       conversation: { id: 'conv-test' }
     };
@@ -77,7 +81,9 @@ describe('Router Module', () => {
   it('handles COMMAND message without crashing', async () => {
     const v6 = makeValidCommandMessage();
     const ctx = {
+      tier: 3,
       validatedV6: v6,
+      peerAddress: '0xsender',
       message: { senderInboxId: '0xsender' },
       conversation: { id: 'conv-test' }
     };
@@ -90,7 +96,9 @@ describe('Router Module', () => {
   it('handles HANDSHAKE message type (passes through)', async () => {
     const v6 = { messageType: 'HANDSHAKE', payload: {} };
     const ctx = {
+      tier: 3,
       validatedV6: v6,
+      peerAddress: '0xsender',
       message: { senderInboxId: '0xsender' },
       conversation: {}
     };

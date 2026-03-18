@@ -2,6 +2,42 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.3.24] - 2026-03-17
+
+### Added
+- **agent-chat v0.2.0** — XMTP transport upgrade for Wire↔Ember interop
+  - `src/peers.mjs` (NEW) — Peer registry with relationship-based trust (unknown/stranger/colleague/friend/family), JSON fallback + bagman detection, atomic writes, normalized peer shape
+  - `src/paths.mjs` (NEW) — Shared path helpers (single source of truth for all XMTP dirs)
+  - `src/agent.mjs` — 3-tier guard adapter: Tier 3 (full V6 + comms-guard), Tier 2 (lenient V6 + rate limit + PII), Tier 1 (plaintext fallback)
+  - `src/consent.mjs` — EIP-191 handshake protocol wiring (challenge/sign/verify via comms-guard), auto-discovery, timeout/retry
+  - `src/router.mjs` — Tier + relationship-aware dispatch, COMMAND demotion by protocol tier AND relationship, atomic inbox writes
+  - `src/bridge.mjs` — Outbound reply blocking (canReply gate), failed/ directory for retry, polling fallback for fs.watch reliability, TTL-based dedup
+  - `src/health.mjs` — Message counter export, runtime path resolution
+  - `cli.mjs` — `trust-peer` (--as/--name), `peers list/show`, `send` (offline outbox queuing)
+  - `config/default.json` — New fields: handshake, discovery, tiers, bridge polling
+  - 86 tests (48 existing + 38 new: unit, integration, adversarial)
+
+### Fixed
+- **install.sh** — Auto-discovers and installs deps for skills with their own package.json (agent-chat, future skills)
+- **agent-chat: agentInstance.inboxId** → `agentInstance.client?.inboxId` (Agent wraps client)
+- **agent-chat: Module-level XMTP_DIR** → runtime `getXmtpDir()` in 4 files (stale on env change)
+- **agent-chat: Router writeInbox** — Added error handling (disk full no longer crashes middleware)
+- **agent-chat: CLI --name flag** — Greedy parsing fixed (stops at next -- flag)
+- **agent-chat: Tier 2 hot path** — Cached rateLimit/piiCheck at module level (was re-importing every message)
+- **agent-chat: startAgent** — Wrapped in try/catch with diagnostic error message
+
+### Security
+- COMMAND execution blocked at both protocol tier (tier 1/2) AND relationship (unknown/stranger)
+- Outbound replies blocked for unknown peers (canReply enforcement in bridge)
+- Path traversal sanitized in correlationId + atomic writes prevent partial corruption
+- Handshake replay protection: 256-bit nonce, 90s freshness, 3 retry max per peer
+- peers.json: chmod 600, atomic write with serialized flush lock
+- PII scan: 0 findings, example addresses genericized in CLI help
+- Cross-model audit: GLM-5 + Grok 4.2 + Claude Opus 4.6 (15 fixes, 3 false positives caught)
+
+### Dependencies
+- Zero new runtime dependencies (same as v0.1.0: @xmtp/agent-sdk, viem, uuid, xmtp-comms-guard peer)
+
 ## [2026.3.23] - 2026-03-17
 
 ### Added

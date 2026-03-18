@@ -115,7 +115,7 @@ disable_key() {
   local reason="$2"
 
   python3 -c "
-import json, sys, fcntl, time
+import json, sys, time, os
 
 path = '$AUTH_PROFILES'
 profile_id = '$profile_id'
@@ -123,42 +123,53 @@ now_ms = int(time.time() * 1000)
 # 6 hours disable (matches billingMaxHours)
 disable_until = now_ms + (6 * 3600 * 1000)
 
-with open(path, 'r+') as f:
-    fcntl.flock(f, fcntl.LOCK_EX)
-    data = json.load(f)
+# Spawn a child to hold the lock, because macOS has unreliable fcntl flock support
+# Use fork + exec for cross-platform file locking compatibility
+pid = os.fork()
+if pid == 0:
+    with open(path, 'r+') as f:
+        data = json.load(f)
 
-    if 'usageStats' not in data:
-        data['usageStats'] = {}
-    if profile_id not in data['usageStats']:
-        data['usageStats'][profile_id] = {}
+        if 'usageStats' not in data:
+            data['usageStats'] = {}
+        if profile_id not in data['usageStats']:
+            data['usageStats'][profile_id] = {}
 
-    stats = data['usageStats'][profile_id]
+        stats = data['usageStats'][profile_id]
 
-    # Check if already disabled
-    existing_disabled = stats.get('disabledUntil', 0)
-    if existing_disabled and existing_disabled > now_ms and stats.get('disabledReason') == 'billing':
-        print(f'ALREADY_DISABLED:{profile_id}')
-        fcntl.flock(f, fcntl.LOCK_UN)
-        sys.exit(0)
+        # Check if already disabled
+        existing_disabled = stats.get('disabledUntil', 0)
+        if existing_disabled and existing_disabled > now_ms and stats.get('disabledReason') == 'billing':
+            print(f'ALREADY_DISABLED:{profile_id}', file=sys.stderr)
+            os._exit(0)
 
-    stats['disabledUntil'] = disable_until
-    stats['disabledReason'] = 'billing'
-    stats['lastFailureAt'] = now_ms
-    stats['errorCount'] = stats.get('errorCount', 0) + 1
+        stats['disabledUntil'] = disable_until
+        stats['disabledReason'] = 'billing'
+        stats['lastFailureAt'] = now_ms
+        stats['errorCount'] = stats.get('errorCount', 0) + 1
 
-    if 'failureCounts' not in stats:
-        stats['failureCounts'] = {}
-    stats['failureCounts']['billing'] = stats['failureCounts'].get('billing', 0) + 1
+        if 'failureCounts' not in stats:
+            stats['failureCounts'] = {}
+        stats['failureCounts']['billing'] = stats['failureCounts'].get('billing', 0) + 1
 
-    # Also set cooldownUntil to ensure OpenClaw doesn't try it
-    stats['cooldownUntil'] = disable_until
+        # Also set cooldownUntil to ensure OpenClaw doesn't try it
+        stats['cooldownUntil'] = disable_until
 
-    f.seek(0)
-    json.dump(data, f, indent=2)
-    f.truncate()
-    fcntl.flock(f, fcntl.LOCK_UN)
+        f.seek(0)
+        json.dump(data, f, indent=2)
+        f.truncate()
 
-print(f'DISABLED:{profile_id}:until:{disable_until}')
+        print(f'DISABLED:{profile_id}:until:{disable_until}', file=sys.stderr)
+        os._exit(0)
+else:
+    # Parent waits for child to handle lock and exit
+    pid, status = os.waitpid(pid, 0)
+    exit_code = os.WEXITSTATUS(status)
+
+    if exit_code not in (0, 1):
+        # Child signaled an error — re-raise it
+        os._exit(exit_code)
+    sys.exit(exit_code)
 " 2>&1
 }
 

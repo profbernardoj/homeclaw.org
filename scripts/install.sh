@@ -247,6 +247,17 @@ if command -v npm &>/dev/null; then
   (cd "$EVERCLAW_ROOT" && npm install --production 2>/dev/null) || {
     echo "⚠️  npm install failed. Run manually: cd $EVERCLAW_ROOT && npm install"
   }
+
+  # Install deps for skills with their own package.json
+  for skill_dir in "$EVERCLAW_ROOT"/skills/*/; do
+    if [ -f "$skill_dir/package.json" ]; then
+      skill_name="$(basename "$skill_dir")"
+      echo "📦 Installing $skill_name dependencies..."
+      (cd "$skill_dir" && npm install --production 2>/dev/null) || {
+        echo "⚠️  $skill_name npm install failed. Run manually: cd $skill_dir && npm install"
+      }
+    fi
+  done
 else
   echo "⚠️  npm not found. Install Node.js, then run: cd $EVERCLAW_ROOT && npm install"
 fi

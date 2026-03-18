@@ -23,7 +23,9 @@ describe('Router Adversarial Tests', () => {
 
   it('handles missing payload gracefully', async () => {
     const ctx = {
+      tier: 3,
       validatedV6: { messageType: 'COMMAND' }, // no payload
+      peerAddress: '0xattacker',
       message: { senderInboxId: '0xattacker' },
       conversation: {}
     };
@@ -35,11 +37,13 @@ describe('Router Adversarial Tests', () => {
 
   it('sanitizes path traversal in correlationId', async () => {
     const ctx = {
+      tier: 3,
       validatedV6: {
         messageType: 'DATA',
         correlationId: '../../../etc/passwd',
         payload: { evil: true }
       },
+      peerAddress: '0xattacker',
       message: { senderInboxId: '0xattacker' },
       conversation: {}
     };
@@ -68,11 +72,13 @@ describe('Router Adversarial Tests', () => {
   it('handles extremely large payload without crash', async () => {
     const bigPayload = { data: 'x'.repeat(60000) }; // under 64KB V6 limit
     const ctx = {
+      tier: 3,
       validatedV6: {
         messageType: 'DATA',
         correlationId: 'big-payload-test',
         payload: bigPayload
       },
+      peerAddress: '0xtest',
       message: { senderInboxId: '0xtest' },
       conversation: {}
     };
@@ -88,7 +94,9 @@ describe('Router Adversarial Tests', () => {
 
   it('handles unknown messageType without crash', async () => {
     const ctx = {
+      tier: 3,
       validatedV6: { messageType: 'DOESNOTEXIST', payload: {} },
+      peerAddress: '0xtest',
       message: { senderInboxId: '0xtest' },
       conversation: {}
     };
