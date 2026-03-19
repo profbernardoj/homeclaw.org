@@ -40,7 +40,7 @@ try {
 
 const BOOTSTRAP_DIR = path.join(os.homedir(), '.everclaw');
 const STATE_FILE = path.join(BOOTSTRAP_DIR, 'bootstrap.json');
-const API_BASE = process.env.EVERCLAW_BOOTSTRAP_URL || 'https://everclawkeyapi-ever-claw.vercel.app';
+const API_BASE = process.env.EVERCLAW_BOOTSTRAP_URL || 'https://api.everclaw.xyz';
 
 // ─── Directory Setup ───────────────────────────────────────────────────────
 
