@@ -7,8 +7,8 @@
  *
  * Features:
  * - Device fingerprint (SHA-256 hashed)
- * - CPU PoW (6 leading zeros,~7s average)
- * - EIP-712 signing (zero gas)
+ * - CPU PoW (6 leading zeros, ~7s average)
+ * - PoW + fingerprint validation (EIP-712 signing deferred to v2)
  * - Optional X post for +1 USDC bonus
  *
  * Usage:
