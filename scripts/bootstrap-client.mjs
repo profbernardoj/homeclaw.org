@@ -114,48 +114,7 @@ async function solvePoW(challenge) {
   throw new Error('PoW timeout');
 }
 
-// ─── EIP-712 Signing ────────────────────────────────────────────────────────
-
-/**
- * Sign bootstrap request with EIP-712 (off-chain, zero gas).
- */
-async function signBootstrapRequest(privateKey, fingerprint, challenge) {
-  const account = privateKeyToAccount(privateKey);
-
-  const domain = {
-    name: "EverClaw Bootstrap",
-    version: "1",
-    chainId: process.env.NODE_ENV === 'test' ? 84532 : 8453 // Base Sepolia : Base
-  };
-
-  const types = {
-    BootstrapRequest: [
-      { name: "wallet", type: "address" },
-      { name: "fingerprint", type: "string" },
-      { name: "timestamp", type: "uint256" },
-      { name: "challengeNonce", type: "bytes32" }
-    ]
-  };
-
-  const timestamp = BigInt(Date.now());
-  const challengeNonce = challenge.startsWith('0x') ? challenge : `0x${challenge}`;
-
-  const message = {
-    wallet: account.address,
-    fingerprint,
-    timestamp,
-    challengeNonce
-  };
-
-  const signature = await account.signTypedData({
-    domain,
-    types,
-    primaryType: 'BootstrapRequest',
-    message
-  });
-
-  return { signature, wallet: account.address, timestamp };
-}
+// EIP-712 signing deferred to v2 — server currently validates via PoW + fingerprint
 
 // ─── Keychain Access─────────────────────────────────────────────────────────
 
