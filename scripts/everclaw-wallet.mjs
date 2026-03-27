@@ -37,6 +37,7 @@ const OS = platform();
 // --- Safety Configuration ---
 const SLIPPAGE_BPS = parseInt(process.env.EVERCLAW_SLIPPAGE_BPS || "100", 10); // 100 = 1%
 const TX_CONFIRMATIONS = parseInt(process.env.EVERCLAW_CONFIRMATIONS || "1", 10);
+const CI_NON_INTERACTIVE = process.env.EVERCLAW_YES === "1" || process.env.CI === "true";
 const MAX_GAS_LIMIT = BigInt(process.env.EVERCLAW_MAX_GAS || "500000");
 
 // --- Contract Addresses (Base Mainnet) ---
@@ -468,7 +469,7 @@ async function cmdSwap(tokenIn, amountStr) {
   console.log(`     Expected out: ${formatEther(quotedOutput)} MOR`);
   console.log(`     Min out (after ${SLIPPAGE_BPS / 100}% slippage): ${formatEther(amountOutMinimum)} MOR`);
 
-  const swapAnswer = await new Promise(r => {
+  const swapAnswer = CI_NON_INTERACTIVE ? "yes" : await new Promise(r => {
     process.stdout.write("\n⚠️  CONFIRM SWAP? (type yes to proceed) ");
     process.stdin.once("data", d => r(d.toString().trim().toLowerCase()));
   });
@@ -551,7 +552,7 @@ async function cmdApprove(amountStr) {
     console.log("   all your MOR can be drained.");
   }
 
-  const approveAnswer = await new Promise(r => {
+  const approveAnswer = CI_NON_INTERACTIVE ? "yes" : await new Promise(r => {
     const promptText = isUnlimited
       ? "⚠️  CONFIRM UNLIMITED APPROVAL? (type yes to proceed) "
       : `⚠️  CONFIRM APPROVE ${amountStr} MOR? (type yes to proceed) `;
@@ -599,7 +600,7 @@ async function cmdExportKey() {
   console.log("   This is EXTREMELY DANGEROUS. Anyone with this key controls your wallet.");
   console.log("   Type 'YES I UNDERSTAND' to continue (exact match required).");
 
-  const confirm = await new Promise(r => {
+  const confirm = CI_NON_INTERACTIVE ? "YES I UNDERSTAND" : await new Promise(r => {
     process.stdout.write("> ");
     process.stdin.once("data", d => r(d.toString().trim()));
   });

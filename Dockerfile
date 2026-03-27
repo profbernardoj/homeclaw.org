@@ -116,7 +116,7 @@ WORKDIR /app
 # This config bootstraps OpenClaw with Morpheus as the primary provider.
 # Users can override by mounting their own ~/.openclaw/openclaw.json
 
-RUN cat > /home/node/.openclaw/openclaw-default.json << 'DEFAULTCONFIG'
+RUN cat > /home/node/.openclaw/openclaw-default.json << 'EOF'
 {
   "gateway": {
     "controlUi": {
@@ -178,7 +178,7 @@ RUN cat > /home/node/.openclaw/openclaw-default.json << 'DEFAULTCONFIG'
     }
   }
 }
-DEFAULTCONFIG
+EOF
 
 RUN chown node:node /home/node/.openclaw/openclaw-default.json
 

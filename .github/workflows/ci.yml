@@ -43,6 +43,8 @@ jobs:
 
       - name: Run wallet test suite
         run: node --test scripts/everclaw-wallet.test.mjs
+        env:
+          EVERCLAW_YES: "1"
 
   proxy-tests:
     name: Proxy Tests
