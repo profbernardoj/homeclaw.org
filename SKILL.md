@@ -703,6 +703,8 @@ This generates a new Ethereum wallet and stores the private key in your macOS Ke
 
 After setup, the wallet is automatically bootstrapped with **0.0008 ETH + 2.00 USDC** on Base mainnet — enough for gas and first transactions. No action required; the bootstrap runs automatically and skips gracefully if the wallet was already funded.
 
+> **Security:** All bootstrap API calls enforce HTTPS with response validation. Plain HTTP is rejected for remote hosts (localhost allowed for dev). If you override `EVERCLAW_BOOTSTRAP_URL`, it must use `https://`.
+
 To earn an additional **+1.00 USDC bonus**, tweet your claim code (shown after bootstrap) and verify at `api.everclaw.xyz/verify-xpost`.
 
 ### Import Existing Key

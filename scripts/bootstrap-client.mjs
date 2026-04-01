@@ -41,7 +41,47 @@ try {
 
 const BOOTSTRAP_DIR = path.join(os.homedir(), '.everclaw');
 const STATE_FILE = path.join(BOOTSTRAP_DIR, 'bootstrap.json');
-const API_BASE = process.env.EVERCLAW_BOOTSTRAP_URL || 'https://api.everclaw.xyz';
+
+// ─── TLS Enforcement (Issue #8: MITM protection) ──────────────────────────
+
+/**
+ * Validate and return the API base URL.
+ * Enforces HTTPS for all remote endpoints. Only localhost/127.0.0.1 may use HTTP (dev only).
+ */
+function resolveApiBase() {
+  const raw = process.env.EVERCLAW_BOOTSTRAP_URL || 'https://api.everclaw.xyz';
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`Invalid EVERCLAW_BOOTSTRAP_URL: ${raw}`);
+  }
+
+  const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname);
+
+  if (parsed.protocol !== 'https:' && !isLocal) {
+    throw new Error(
+      `EVERCLAW_BOOTSTRAP_URL must use HTTPS for remote hosts (got ${parsed.protocol}//${parsed.hostname}). ` +
+      'Plain HTTP exposes wallet addresses and PoW challenges to network observers. ' +
+      'Only localhost/127.0.0.1 may use HTTP for development.'
+    );
+  }
+
+  // Warn if TLS verification is disabled (common footgun)
+  if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0' && !isLocal) {
+    console.warn(
+      '⚠️  WARNING: NODE_TLS_REJECT_UNAUTHORIZED=0 disables TLS certificate verification.\n' +
+      '   This makes HTTPS connections vulnerable to MITM attacks.\n' +
+      '   Remove this env var for production use.'
+    );
+  }
+
+  // Strip trailing slash for consistent URL building
+  return parsed.origin + parsed.pathname.replace(/\/+$/, '');
+}
+
+const API_BASE = resolveApiBase();
+const FETCH_TIMEOUT_MS = 30000; // 30s per request — fail fast on dead networks
 
 // ─── Directory Setup ───────────────────────────────────────────────────────
 
@@ -231,12 +271,18 @@ async function bootstrap() {
     const challengeRes = await fetch(`${API_BASE}/bootstrap/challenge`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fingerprint, timestamp })
+      body: JSON.stringify({ fingerprint, timestamp }),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     });
 
+    if (!challengeRes.ok) {
+      let errMsg = `HTTP ${challengeRes.status}`;
+      try { const errBody = await challengeRes.json(); errMsg = errBody.error || errMsg; } catch {}
+      throw new Error(`Challenge request failed: ${errMsg}`);
+    }
     const challengeData = await challengeRes.json();
-    if (!challengeRes.ok || challengeData.error) {
-      throw new Error(challengeData.error || `HTTP ${challengeRes.status}`);
+    if (!challengeData || typeof challengeData.challenge !== 'string' || challengeData.challenge.length < 16) {
+      throw new Error('Invalid challenge response from server — possible MITM or API change');
     }
     const { challenge } = challengeData;
     console.log(`⚡ Challenge received: ${challenge.slice(0, 16)}...`);
@@ -261,12 +307,18 @@ async function bootstrap() {
         fingerprint,
         challengeNonce: challenge,
         solution
-      })
+      }),
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     });
 
+    if (!claimRes.ok) {
+      let errMsg = `HTTP ${claimRes.status}`;
+      try { const errBody = await claimRes.json(); errMsg = errBody.error || errMsg; } catch {}
+      throw new Error(`Bootstrap claim failed: ${errMsg}`);
+    }
     const resultData = await claimRes.json();
-    if (!claimRes.ok || resultData.error) {
-      throw new Error(resultData.error || `HTTP ${claimRes.status}`);
+    if (!resultData || typeof resultData.claimCode !== 'string') {
+      throw new Error('Invalid bootstrap response from server — possible MITM or API change');
     }
 
     // Store result
@@ -314,7 +366,7 @@ Usage:
   node bootstrap-client.mjs bootstrap [--test-fingerprint=HASH]
 
 Environment:
-  EVERCLAW_BOOTSTRAP_URL - API endpoint (default: https://api.everclaw.xyz/bootstrap)
+  EVERCLAW_BOOTSTRAP_URL - API endpoint (default: https://api.everclaw.xyz)
   TEST_FINGERPRINT - Override fingerprint for testing
   NODE_ENV=test - Use Base Sepolia instead of Base mainnet
 

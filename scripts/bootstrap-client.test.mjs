@@ -2,6 +2,7 @@
  * Bootstrap Client Unit Tests
  */
 
+import { test } from 'node:test';
 import crypto from 'crypto';
 import { getFingerprint, solvePoW } from './bootstrap-client.mjs';
 import assert from 'assert';
