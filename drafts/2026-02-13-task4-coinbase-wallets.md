@@ -1,7 +1,7 @@
 # Coinbase Agentic Wallets Research
 
 **Date:** 2026-02-13  
-**Requested by:** REDACTED  
+**Requested by:** [REDACTED]  
 **Status:** Breaking news — Coinbase just launched this 2 days ago (Feb 11, 2026)
 
 ---

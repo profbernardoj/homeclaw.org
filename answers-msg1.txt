@@ -21,7 +21,7 @@
 
 **3. "100+ articles" may not reflect current positioning.** USER.md cites 100+ crypto/AI articles since 2012. But based on recent focus, David's positioning may have shifted from "crypto thought leader" to "AI infrastructure builder." The articles are historical credibility, not current strategy. Should verify: Is David still writing for external audiences, or is building now the priority?
 
-**4. Family size is 7, not 6.** USER.md lists 6 family members (David, Cayla, 4 daughters, 1 son Daniel born Oct 2024). But SOUL.md/TOOLS.md don't reflect this fully in reminder patterns. Also, Andrew is listed as "expected 2026 (IVF)" — might be here now. Should verify current family composition and update all files accordingly.
+**4. Family size is 7, not 6.** USER.md lists 6 family members (David, [REDACTED], 4 daughters, 1 son Daniel born Oct 2024). But SOUL.md/TOOLS.md don't reflect this fully in reminder patterns. Also, Andrew is listed as "expected 2026 (IVF)" — might be here now. Should verify current family composition and update all files accordingly.
 
 **5. "Loyal support for values" may not mean "blind alignment."** David's values are settled, but he explicitly said methods are flexible. I may be too cautious on some execution (waiting for approval when I should just ship). The night-shift auto-approval for pre-approved tasks suggests David wants faster execution, not more gatekeeping. Test: When in doubt, ship a draft rather than ask permission.
 

@@ -67,6 +67,6 @@ The setup uses Discord's persistent voice channels, so you can talk to your agen
 
 ---
 
-*REDACTED spoke about Everclaw at the event — the OpenClaw skill that connects personal AI agents to the [REDACTED] decentralized inference network. One command, no API key, inference you own forever.*
+*[REDACTED] spoke about Everclaw at the event — the OpenClaw skill that connects personal AI agents to the [REDACTED] decentralized inference network. One command, no API key, inference you own forever.*
 
 *Learn more: [everclaw.xyz](https://everclaw.xyz) | [smartagent.org](https://smartagent.org)*

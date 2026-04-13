@@ -110,7 +110,7 @@ This is not a knowledge base. It's a compendium of:
 
 ---
 
-*Source: "How to Build Unicorn — 33 Laws for Building A Great Company" by REDACTED*
+*Source: "How to Build Unicorn — 33 Laws for Building A Great Company" by [REDACTED]*
 
 ---
 

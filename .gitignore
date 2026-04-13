@@ -70,3 +70,6 @@ __pycache__/
 *.backup*
 *.bak-*
 morpheus-proxy*.bak
+
+# PII pattern file — NEVER commit
+.pii-patterns.json

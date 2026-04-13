@@ -46,8 +46,8 @@ remediate_file() {
   # 1. Home directory paths
   sed -i '' 's|~|~|g' "$file" 2>/dev/null || true
   # 2. Full name -> generic
-  sed -i '' 's|REDACTED|EverClaw Contributor|g' "$file" 2>/dev/null || true
-  sed -i '' 's|REDACTED|EverClaw Contributor|g' "$file" 2>/dev/null || true
+  sed -i '' 's|[REDACTED]|EverClaw Contributor|g' "$file" 2>/dev/null || true
+  sed -i '' 's|[REDACTED]|EverClaw Contributor|g' "$file" 2>/dev/null || true
   # 3. Possessive
   sed -i '' "s|David's preference|default|g" "$file" 2>/dev/null || true
   sed -i '' "s|David's|the user's|g" "$file" 2>/dev/null || true

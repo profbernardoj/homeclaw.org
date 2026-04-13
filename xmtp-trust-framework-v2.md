@@ -3,7 +3,7 @@
 **Version:** 2.0
 **Created:** 2026-03-14
 **Status:** Design Phase
-**Author:** Bernardo (with REDACTED)
+**Author:** [REDACTED]
 
 ---
 
@@ -87,7 +87,7 @@ Unknown Agent ──HANDSHAKE──► Comms Guard
       "address": "[XMTP_AGENT_ADDRESS]",
       "inboxId": "72abdd2fa6e16f87d3269468f66e3913c35ee6b802ae4ca87fe4e1d93092b1c4",
       "name": "[REDACTED]",
-      "owner": "REDACTED",
+      "owner": "[REDACTED]",
       "trustLevel": 8,
       "contextProfile": "business",
       "approved": true,
@@ -573,5 +573,5 @@ The EverClaw message protocol (`agent-message-schema.json`) should be extended w
 
 ## Changelog
 
-- **V2 (2026-03-14):** Added Comms Guard Agent, inbound protection, ERC-8004 for payments, all decisions from David incorporated
+- **V2 (2026-03-14):** Added Comms Guard Agent, inbound protection, ERC-8004 for payments, all decisions from maintainer incorporated
 - **V1 (2026-03-14):** Initial draft with outbound-only focus
