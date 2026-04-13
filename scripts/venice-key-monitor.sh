@@ -5,17 +5,31 @@
 
 set -e
 
-WORKSPACE="~/.openclaw/workspace"
+WORKSPACE="${HOME}/.openclaw/workspace"
 SCRIPT_DIR="$WORKSPACE/skills/everclaw/scripts"
-KEYS_FILE="$SCRIPT_DIR/venice-keys.json"
 LOG_DIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
-KEYS_JSON=$(cat "$KEYS_FILE" 2>/dev/null || jq -n '[]')
-KEYS=($(echo "$KEYS_JSON" | jq -r 'to_entries[].value.api_key'))
+# Get Venice API keys from 1Password via bagman skill
+VKEY1=$(op read "op://Venice/key1" 2>/dev/null || echo "")
+VKEY2=$(op read "op://Venice/key2" 2>/dev/null || echo "")
+
+KEYS=("$VKEY1" "$VKEY2")
 
 DISABLED_KEYS=()
 HEALTHY_KEYS=()
+
+# Check if any keys are available
+if [ ${#KEYS[@]} -eq 0 ] || [ "${KEYS[0]}" = "" ]; then
+  echo "⚠️  No Venice API keys found in 1Password"
+  echo ""
+  echo "JSON Output:"
+  echo "{"
+  echo "  \"healthy\": {},"
+  echo "  \"disabled_keys\": []"
+  echo "}"
+  exit 0
+fi
 
 echo "🔍 Venice Key Health Monitor"
 echo "============================"
@@ -23,8 +37,8 @@ echo ""
 
 for i in "${!KEYS[@]}"; do
   API_KEY="${KEYS[$i]}"
-  KEY_ID=$(echo "$KEYS_JSON" | jq -r ".[$i] | .id // \"key_$i\"")
-  TARGET=$(echo "$KEYS_JSON" | jq -r ".[$i] | .target // \"default\"")
+  KEY_ID="venice:key$i"
+  TARGET="main"
 
   echo "Checking Key: $KEY_ID (Target: $TARGET)"
 
