@@ -79,7 +79,7 @@ memory/relationships/
 - **Last contact:** YYYY-MM-DD
 
 ## Context
-[Background, how we know them, what they mean to David]
+[Background, how we know them, what they mean to the user]
 
 ## Key Details
 - Birthday: YYYY-MM-DD

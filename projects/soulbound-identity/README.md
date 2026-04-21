@@ -25,7 +25,7 @@ that serves as the agent's on-chain wallet.
 2. **Agentic AI Agent** — EverClaw, 28 flavors, ClawHub
 3. **Corporate Agent** — Based AI, enterprise
 4. **Advisor Agent** — External project advisory
-5. **David Agent** — Public-facing David clone (March project)
+5. **User Agent** — Public-facing user-facing clone (March project)
 
 ### Personal Agents (Mac Mini #2)
 6-12. Owner, Family Member 1-6 (personal agents)

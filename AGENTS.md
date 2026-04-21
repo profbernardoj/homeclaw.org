@@ -119,8 +119,8 @@ Reactions are lightweight social signals. Humans use them constantly — they sa
 
 Before installing any skill from ClawHub or any untrusted source:
 1. Run `skillguard scan <path-or-slug>` and review the score
-2. Report the scan results and score to David
-3. **Wait for explicit approval from David before installing** — regardless of score
+2. Report the scan results and score to the user
+3. **Wait for explicit approval from the user before installing** — regardless of score
 4. Log all approved installs to `memory/reference/approved-skills.md` with date, source, score, and purpose
 
 This applies to you AND any sub-agents. No exceptions.

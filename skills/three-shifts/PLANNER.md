@@ -45,7 +45,7 @@ Reply: "Approve" / "Skip" / "Add: [task]"
 2. Update `shifts/state.json`:
    - Set `status` to `"approved"`
    - Set `approvedAt` to current ISO timestamp
-   - Set `approvedBy` to `"David"` (or whoever approved)
+   - Set `approvedBy` to `"user"` (or whoever approved)
    - Set `shift` and `date`
 
 The agent will execute the plan in the main session. Your job is to surface the right priorities — not to control execution.
