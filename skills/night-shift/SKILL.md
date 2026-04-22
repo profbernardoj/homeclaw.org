@@ -1,3 +1,8 @@
+---
+name: night-shift
+description: "Automated overnight task planning and execution engine for EverClaw. Generates prioritized action lists at 9:30 PM CST for the 10 PM–6 AM window, requires human approval before execution, enforces safety boundaries on allowed task types, and updates Mission Control dashboard at shift end. Use when planning overnight autonomous work, configuring night shift cron jobs, reviewing morning progress reports, or setting task approval policies."
+---
+
 # Night Shift Skill
 
 **Purpose:** Generate actionable overnight tasks based on the day's projects and objectives.

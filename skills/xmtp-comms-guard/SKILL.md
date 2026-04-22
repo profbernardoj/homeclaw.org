@@ -1,3 +1,8 @@
+---
+name: xmtp-comms-guard
+description: "Security middleware for all XMTP communications in EverClaw. Enforces guarded client usage with validation, integrity checks, and fail-closed security policies. Integrates approval flows for sensitive operations. Use when integrating XMTP messaging, configuring communication security, or auditing guarded client enforcement."
+---
+
 # xmtp-comms-guard — Skill Integration Guide (V6)
 
 **Type:** Critical Security
