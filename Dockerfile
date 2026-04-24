@@ -62,8 +62,8 @@ WORKDIR /openclaw
 RUN git clone --depth 1 --branch ${OPENCLAW_VERSION} https://github.com/openclaw/openclaw.git . && \
     rm -rf .git
 
-# Copy EverClaw skill into build context
-COPY --chown=node:node . /everclaw-skill
+# Copy EverClaw core skill into build context (monorepo: packages/core/ is the skill)
+COPY --chown=node:node packages/core /everclaw-skill
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -121,6 +121,9 @@ RUN cd /app && npm install node-llama-cpp@3.18.1 --no-save 2>&1 || true
 # Copy EverClaw skill into the workspace
 COPY --from=openclaw-builder --chown=node:node /everclaw-skill /home/node/.openclaw/workspace/skills/everclaw
 
+# Copy flavor overlays into the skill directory (monorepo: flavors/ is at repo root)
+COPY --chown=node:node flavors /home/node/.openclaw/workspace/skills/everclaw/flavors
+
 # Install EverClaw dependencies (x402, viem for finance tracker)
 WORKDIR /home/node/.openclaw/workspace
 RUN npm init -y 2>/dev/null; \
@@ -135,17 +138,17 @@ WORKDIR /app
 # the config file does not already exist.
 RUN mkdir -p /opt/everclaw/defaults
 
-COPY config/openclaw-default.json /opt/everclaw/defaults/openclaw-default.json
+COPY packages/core/config/openclaw-default.json /opt/everclaw/defaults/openclaw-default.json
 RUN chown node:node /opt/everclaw/defaults/openclaw-default.json
 
 # ─── Boot File Templates ─────────────────────────────────────────────────────
 # Copy boot templates to workspace if they don't already exist (first run)
 
-COPY --chown=node:node scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY --chown=node:node packages/core/scripts/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
 # ─── Flavor Overlay ───────────────────────────────────────────────────────────
-# Build with --build-arg FLAVOR=morpheus-agent (or any flavor in templates/flavors/)
+# Build with --build-arg FLAVOR=morpheusclaw.com (or any flavor dir in flavors/)
 # to bake flavor-specific files into the image at build time.
 # Flavor .md files are FINAL content (no __PLACEHOLDER__ vars) — copied directly
 # to the workspace, bypassing the template system. The entrypoint's scaffold step
@@ -154,7 +157,7 @@ RUN chmod +x /app/docker-entrypoint.sh
 # If no flavor config exists, the generic default is preserved.
 
 ARG FLAVOR=
-RUN FDIR="/home/node/.openclaw/workspace/skills/everclaw/templates/flavors/${FLAVOR}"; \
+RUN FDIR="/home/node/.openclaw/workspace/skills/everclaw/flavors/${FLAVOR}"; \
     if [ -n "${FLAVOR}" ] && [ -d "${FDIR}" ]; then \
       # Copy flavor .md files directly to workspace (final content, not templates) \
       for f in "${FDIR}"/*.md; do \

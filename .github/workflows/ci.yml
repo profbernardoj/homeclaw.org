@@ -22,10 +22,10 @@ jobs:
       - run: npm ci
 
       - name: Node syntax check
-        run: node --check scripts/*.mjs
+        run: node --check packages/core/scripts/*.mjs
 
       - name: Shell syntax check
-        run: bash -n scripts/*.sh
+        run: bash -n packages/core/scripts/*.sh
 
   unit-tests:
     name: Wallet Tests
@@ -42,7 +42,7 @@ jobs:
       - run: npm ci
 
       - name: Run wallet test suite
-        run: node --test scripts/everclaw-wallet.test.mjs
+        run: node --test packages/core/scripts/everclaw-wallet.test.mjs
         env:
           EVERCLAW_YES: "1"
 
@@ -61,7 +61,7 @@ jobs:
       - run: npm ci
 
       - name: Run proxy test suite
-        run: node --test scripts/morpheus-proxy.test.mjs
+        run: node --test packages/core/scripts/morpheus-proxy.test.mjs
 
   security-scan:
     name: Secret Scanning
