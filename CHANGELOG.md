@@ -2,6 +2,45 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.4.24.1832] - 2026-04-24
+
+### Changed — OpenClaw Pin v2026.4.21 → v2026.4.23
+
+- **Dockerfile:** OpenClaw build target updated to `v2026.4.23`
+- **docker-compose.yml:** Image tag and build arg updated
+
+### Upstream Highlights (OpenClaw v2026.4.21 → v2026.4.23)
+
+#### New Features
+- **Image Generation:** gpt-image-2 via Codex OAuth (no API key needed), OpenRouter image models, quality/format hints
+- **Subagents:** Optional forked context for `sessions_spawn` — child inherits parent transcript
+- **Tools:** Per-call `timeoutMs` for image, video, music, and TTS generation
+- **Memory:** Configurable `memorySearch.local.contextSize` (4096 default) for constrained hosts
+- **Dependencies:** Pi packages updated to 0.70.0
+- **Codex Harness:** Structured debug logging for harness selection decisions
+
+#### Fixes
+- **Block Streaming:** Suppress duplicate replies after partial block-delivery aborts
+- **Slack:** Classify MPIM group DMs as group chat, suppress verbose tool progress in rooms
+- **Telegram:** Parse markdown image syntax into outbound media payloads
+- **WhatsApp:** Unified outbound media normalization across sends and auto-replies
+- **WebChat:** Surface non-retryable provider failures (billing, auth, rate-limit) with model-switch hints
+- **Memory CLI:** Local embedding provider resolution for standalone commands
+- **Codex/Windows:** Resolve npm-installed codex.cmd shims through PATHEXT
+- **Media Understanding:** Honor explicit imageModel config before native-vision skips
+- **Image Attachments:** Preserve for text-only models via media ref offloading
+
+#### Security
+- **Teams:** Cross-bot token replay blocked via verified appid/azp
+- **Android:** Loopback-only cleartext gateway connections required
+- **Pairing:** Private-IP or loopback required for cleartext mobile pairing
+- **QA Channel:** Non-HTTP(S) inbound attachment URLs rejected
+- **Claude CLI:** `bypassPermissions` derived from OpenClaw exec policy
+- **Plugins:** Setup-api lookup hardening
+
+(Reference: https://github.com/openclaw/openclaw/releases/tag/v2026.4.23)
+
+
 ## [2026.4.22.1820] - 2026-04-22
 
 ### Changed — Skill Frontmatter & Cleanup
