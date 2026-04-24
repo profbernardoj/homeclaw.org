@@ -30,8 +30,8 @@ jobs:
       - name: Build flavor matrix
         id: set-matrix
         run: |
-          # Discover all flavor directories
-          FLAVORS=$(ls -d templates/flavors/*/ 2>/dev/null | xargs -I{} basename {} | jq -R . | jq -s .)
+          # Discover all flavor directories (monorepo: flavors/ not templates/flavors/)
+          FLAVORS=$(ls -d flavors/*/ 2>/dev/null | xargs -I{} basename {} | jq -R . | jq -s .)
           # Build matrix: generic (no flavor) + all discovered flavors
           # Use -c (compact) to keep JSON on a single line for GITHUB_OUTPUT
           MATRIX=$(echo "$FLAVORS" | jq -c '[{"flavor": "", "image_name": "everclaw/everclaw"}, (.[] | {"flavor": ., "image_name": ("everclaw/" + .)})]')
@@ -69,7 +69,7 @@ jobs:
 
       - name: Get OpenClaw version from Dockerfile
         id: openclaw_version
-        run: echo "OPENCLAW_VERSION=$(grep -m1 'ARG OPENCLAW_VERSION=' Dockerfile | sed 's/ARG OPENCLAW_VERSION=//')" >> $GITHUB_OUTPUT
+        run: echo "OPENCLAW_VERSION=$(grep -m1 'ARG OPENCLAW_VERSION=' packages/core/Dockerfile | sed 's/ARG OPENCLAW_VERSION=//')" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU (for multi-arch)
         uses: docker/setup-qemu-action@v3
@@ -105,6 +105,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: packages/core/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
