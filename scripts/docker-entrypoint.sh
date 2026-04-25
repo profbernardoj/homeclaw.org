@@ -19,6 +19,7 @@ DEFAULT_CONFIG="/opt/everclaw/defaults/openclaw-default.json"
 
 GATEWAY_PID=""
 PROXY_PID=""
+FIRST_RUN_MARKER="${OPENCLAW_HOME}/.first-run-complete"
 
 # ─── First Run: Scaffold workspace ──────────────────────────────────────────
 
@@ -476,8 +477,32 @@ if [ "$GATEWAY_HEALTHY" = "true" ]; then
   echo "╚══════════════════════════════════════════════════════════════════╝"
   echo ""
   echo "💡 Bookmark the Dashboard URL — it includes your auth token."
-  echo "⚠️  For local use only. Do not expose to the internet without"
-  echo "   additional authentication (reverse proxy, VPN, etc)."
+  echo ""
+
+  # First-run security guidance banner (shown once, suppressed by sentinel file)
+  if [ ! -f "$FIRST_RUN_MARKER" ]; then
+    GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
+    cat <<EOF
+╔══════════════════════════════════════════════════════════════════╗
+║  🔒 Security: Best Practices                                    ║
+║                                                                 ║
+║  For best security, access via http://localhost:${GATEWAY_PORT}
+║  LAN access (e.g. http://192.168.x.x:${GATEWAY_PORT}) works but
+║  is less secure — device auth requires HTTPS or localhost.
+║                                                                 ║
+║  For remote access, set up an HTTPS reverse proxy:              ║
+║    • Caddy, Traefik, or Nginx with Let's Encrypt               ║
+║    • SSH tunnel: ssh -NL ${GATEWAY_PORT}:127.0.0.1:${GATEWAY_PORT} user@host
+║                                                                 ║
+║  Docs: https://docs.openclaw.ai/gateway/security               ║
+╚══════════════════════════════════════════════════════════════════╝
+EOF
+    if ! touch "$FIRST_RUN_MARKER" 2>/dev/null; then
+      echo "⚠️  Could not create first-run marker — this banner may reappear" >&2
+    fi
+  fi
+  echo "⚠️  Do not expose to the internet without additional authentication"
+  echo "   (reverse proxy, VPN, etc)."
   echo ""
 elif [ "$GATEWAY_ALIVE" = "false" ]; then
   echo ""

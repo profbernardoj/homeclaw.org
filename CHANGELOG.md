@@ -2,6 +2,16 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.4.25.1719] - 2026-04-25
+
+### Added — BACK-006: First-Run Security Guidance Banner
+
+- **Feature:** Docker containers now show a one-time security guidance banner on first startup, recommending localhost access and explaining HTTPS reverse proxy options (Caddy, Traefik, Nginx, SSH tunnel).
+- **Sentinel:** Banner is suppressed on subsequent starts via `~/.openclaw/.first-run-complete` marker file. If the marker cannot be created (read-only volume), a warning is logged and the banner reappears.
+- **Port-aware:** Banner uses `OPENCLAW_GATEWAY_PORT` env var (default 18789) for all URLs and SSH tunnel examples.
+- **Files:** `packages/core/scripts/docker-entrypoint.sh` (+27/-2)
+- **SOP-001:** Stages 0-7 complete. Grok 4.20: 2 rounds → Perfect. Cross-model (Claude Opus 4.6): Perfect. PII scan: clean.
+
 ## [2026.4.25.0441] - 2026-04-25
 
 ### Fixed — BACK-015: install-with-deps.sh False-Positive Dependency Reporting
