@@ -48,7 +48,7 @@ DISK_FREE_MB=0
 GPU_TYPE="none"
 
 # Dependency tracking
-MISSING_DEPS=""
+MISSING_DEPS=()
 MISSING_COUNT=0
 
 # ─── Parse Arguments ─────────────────────────────────────────────
@@ -351,7 +351,7 @@ check_dep() {
     return 0
   else
     log_err "${name} ${YELLOW}(missing)${NC}"
-    MISSING_DEPS="${MISSING_DEPS} ${name}"
+    MISSING_DEPS+=("$name")
     MISSING_COUNT=$((MISSING_COUNT + 1))
     return 1
   fi
@@ -514,7 +514,7 @@ if [[ $MISSING_COUNT -gt 0 ]]; then
     echo -e "${CYAN}Auto-installing ${MISSING_COUNT} missing dependencies...${NC}"
     echo ""
 
-    for dep in $MISSING_DEPS; do
+    for dep in "${MISSING_DEPS[@]}"; do
       install_dep "$dep" || {
         log_err "Failed to install ${dep}"
         echo ""
@@ -527,7 +527,7 @@ if [[ $MISSING_COUNT -gt 0 ]]; then
     # Re-verify
     echo ""
     echo -e "${BOLD}Verifying installation...${NC}"
-    MISSING_DEPS=""
+    MISSING_DEPS=()
     MISSING_COUNT=0
     if [[ "$OS" == "Darwin" ]]; then
       check_dep "Homebrew" "brew" || true
