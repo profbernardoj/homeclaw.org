@@ -2,6 +2,15 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.4.25.0136] - 2026-04-25
+
+### Fixed — Monorepo Bootstrap Wrapper
+
+- **Added wrapper** at `scripts/bootstrap-gateway.mjs` that forwards to `packages/core/scripts/bootstrap-gateway.mjs`
+- **Issue:** Users cloning the monorepo (`EverClaw/EverClaw`) got `MODULE_NOT_FOUND` when running `npm run bootstrap` because the actual script lives in `packages/core/scripts/`
+- **Fix:** Thin ESM wrapper at monorepo root forwards CLI args to the real script in `packages/core/`
+- **Composed flavor repos unaffected:** `flavor-compose.sh` copies `packages/core/scripts/` to output root (not monorepo root `scripts/`), so flavor installs already had the real script
+
 ## [2026.4.24.1832] - 2026-04-24
 
 ### Changed — OpenClaw Pin v2026.4.21 → v2026.4.23
