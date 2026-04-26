@@ -2477,7 +2477,7 @@ backup.tar.zst.age (AGE encrypted)
   "components": ["openclaw", "morpheus", "everclaw"],
   "sizes": { "openclaw": 5242880, "morpheus": 1048576, "everclaw": 4096 },
   "checksums": { "openclaw": "sha256:...", "morpheus": "sha256:..." },
-  "versions": { "openclaw": "2026.4.23", "everclaw": "2026.4.24.1832" }
+  "versions": { "openclaw": "2026.4.24", "everclaw": "2026.4.24.1832" }
 }
 ```
 
@@ -2847,6 +2847,16 @@ node scripts/buddy-export.mjs --import ~/alice-backup.tar.gz --force
 ---
 
 ## Changelog
+
+### NEXT_VERSION
+- **OpenClaw pin** v2026.4.23 → v2026.4.24
+- **Bonjour/mDNS crash mitigation** — OpenClaw v2026.4.24 ships a broken bonjour (mDNS/CIAO) plugin that throws unhandled promise rejections on macOS and headless Linux (Docker/VPS), crashing all WebSocket connections (ECONNRESET → 1006). EverClaw now auto-disables the bonjour plugin and cleans corrupted `plugin-runtime-deps` before gateway startup, across all modalities (Docker entrypoint, native setup.mjs). Users upgrading to this version are fully protected without manual intervention.
+  - Ref: https://github.com/openclaw/openclaw/issues/70232
+- **Upstream highlights:**
+  - New: Google Meet bundled participant plugin (personal Google auth, Chrome/Twilio realtime sessions, paired-node Chrome support, artifact/attendance exports), DeepSeek V4 Flash + V4 Pro in bundled catalog (V4 Flash is onboarding default), Talk/Voice Call/Google Meet realtime voice loops with full agent tool access, browser automation coordinate clicks + longer default action budgets + per-profile headless overrides + steadier tab reuse/recovery
+  - Performance: Static model catalogs, manifest-backed model rows, lazy provider dependencies, externalized plugin-runtime-deps for lighter startup
+  - Fixes: DeepSeek thinking/replay behavior for follow-up tool-call turns, Bonjour mDNS watchdog failures no longer loop forever (self-disables after repeated failed restarts)
+  - (Reference: https://github.com/openclaw/openclaw/releases/tag/v2026.4.24)
 
 ### 2026.4.24.1832
 - **OpenClaw pin** v2026.4.21 → v2026.4.23
