@@ -2,6 +2,30 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.4.28.1255] - 2026-04-28
+
+### Fixed — Monorepo Path Resolution (Regression from v2026.4.22)
+
+The April 22 monorepo restructure moved all runtime scripts from `scripts/` to `packages/core/scripts/`, but installer scripts, documentation, and diagnostics still referenced the old paths. This caused:
+
+- **404 errors** on `curl | bash` install URLs documented in SKILL.md
+- **"file not found" errors** for setup.mjs, setup-ollama.sh, install.sh, bootstrap-everclaw.mjs during installation
+- **Broken fix suggestions** in diagnose.sh
+
+#### Changes
+
+- **install-with-deps.sh:** Added `SCRIPTS_DIR` auto-detection for monorepo vs composed flavor layouts; all `scripts/` references now use resolved paths
+- **install-everclaw.sh:** Same `SCRIPTS_DIR` resolution after clone/update
+- **diagnose.sh:** Updated all `fix` suggestions to use `$SCRIPT_DIR` (resolves to script's containing directory)
+- **SKILL.md:** Fixed curl URLs from `scripts/` to `packages/core/scripts/`
+
+#### Testing
+
+- Verified corrected URLs return HTTP 200 from GitHub raw CDN
+- Bash syntax check passed on all modified scripts
+- SCRIPTS_DIR resolution verified for both monorepo and composed flavor structures
+- Pre-existing test failures (mempalace-bridge, security-tier) unchanged
+
 ## [2026.4.28.0352] - 2026-04-28
 
 ### Changed — OpenClaw Pin v2026.4.25 → v2026.4.26

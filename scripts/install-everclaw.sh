@@ -8,7 +8,7 @@
 #   - Post-install: router, proxy, guardian setup
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/EverClaw/EverClaw/main/scripts/install-everclaw.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/EverClaw/EverClaw/main/packages/core/scripts/install-everclaw.sh | bash
 #   # or
 #   bash skills/everclaw/scripts/install-everclaw.sh
 
@@ -157,7 +157,7 @@ except: pass
     echo "  • morpheus/kimi-k2.5     — Local Morpheus P2P (needs router)"
     echo ""
     log "Quick fix:"
-    echo "  node $SKILL_DIR/scripts/bootstrap-gateway.mjs"
+    echo "  node $SCRIPTS_DIR/bootstrap-gateway.mjs"
     echo "  openclaw gateway restart"
     echo ""
   fi
@@ -177,16 +177,16 @@ post_install() {
   echo ""
   info "Next steps:"
   echo "  1. Install the Morpheus router:"
-  echo "     bash $SKILL_DIR/scripts/install.sh"
+  echo "     bash $SCRIPTS_DIR/install.sh"
   echo ""
   echo "  2. Install the proxy + guardian:"
-  echo "     bash $SKILL_DIR/scripts/install-proxy.sh"
+  echo "     bash $SCRIPTS_DIR/install-proxy.sh"
   echo ""
   echo "  3. Create your wallet:"
-  echo "     node $SKILL_DIR/scripts/everclaw-wallet.mjs setup"
+  echo "     node $SCRIPTS_DIR/everclaw-wallet.mjs setup"
   echo ""
   echo "  4. Or bootstrap with free inference (no wallet needed):"
-  echo "     node $SKILL_DIR/scripts/bootstrap-gateway.mjs"
+  echo "     node $SCRIPTS_DIR/bootstrap-gateway.mjs"
   echo ""
   warn "IMPORTANT: Valid model prefixes are 'morpheus/' or 'mor-gateway/'"
   warn "  NOT 'everclaw/' — that will route to Venice instead of Morpheus."
@@ -225,4 +225,13 @@ check_version() {
 check_version "$@"
 check_for_collision
 install_or_update
+
+# Resolve scripts directory — supports both monorepo (packages/core/scripts/)
+# and composed flavor repos (scripts/ at root). Must run AFTER install_or_update.
+if [[ -d "$SKILL_DIR/packages/core/scripts" ]]; then
+  SCRIPTS_DIR="$SKILL_DIR/packages/core/scripts"
+else
+  SCRIPTS_DIR="$SKILL_DIR/scripts"
+fi
+
 post_install

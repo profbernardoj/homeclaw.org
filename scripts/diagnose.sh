@@ -266,7 +266,7 @@ print(ts)
   if [[ "$timeout_check" -lt 180 ]]; then
     fail "timeoutSeconds=${timeout_check}s is too low for Morpheus Gateway models"
     fix "GLM-5/gpt-oss-120b need 30-120s for P2P discovery on first request"
-    fix "Run: node scripts/setup.mjs --apply (auto-sets 300s)"
+    fix "Run: node $SCRIPT_DIR/setup.mjs --apply (auto-sets 300s)"
     fix "Or manually set agents.defaults.timeoutSeconds to 300 in openclaw.json"
   else
     pass "timeoutSeconds=${timeout_check}s (sufficient for Morpheus Gateway)"
@@ -288,7 +288,7 @@ print(count)
   if [[ "$non_streaming" -gt 0 ]]; then
     fail "${non_streaming} model(s) missing streaming=true — causes timeouts on slow P2P connections"
     fix "Streaming keeps connections alive once tokens start flowing"
-    fix "Run: node scripts/setup.mjs --apply (auto-enables streaming)"
+    fix "Run: node $SCRIPT_DIR/setup.mjs --apply (auto-enables streaming)"
     fix "Or manually add \"streaming\": true to each model in openclaw.json"
   elif [[ "$non_streaming" -eq 0 ]]; then
     pass "All models have streaming enabled"
@@ -323,7 +323,7 @@ print(count)
       while IFS= read -r line; do
         fix "  $line"
       done <<< "$bad_inputs"
-      fix "Run: node scripts/setup.mjs --apply (auto-sanitizes input modalities)"
+      fix "Run: node $SCRIPT_DIR/setup.mjs --apply (auto-sanitizes input modalities)"
     else
       pass "All model input modalities valid (text/image only)"
     fi
@@ -338,7 +338,7 @@ print(count)
         pass "MemPalace palace exists at $palace_path"
       else
         warn "MemPalace palace not found — run migration to initialize"
-        fix "node scripts/memory/migrate-to-mempalace.mjs --dry-run"
+        fix "node $SCRIPT_DIR/memory/migrate-to-mempalace.mjs --dry-run"
       fi
     else
       info "MemPalace not installed (optional enhancement for memory search)"
@@ -434,7 +434,7 @@ else:
 
     if [[ "$sess_status" == "NONE" ]]; then
       fail "No active blockchain sessions"
-      fix "Open one: bash scripts/session.sh open kimi-k2.5 604800"
+      fix "Open one: bash $SCRIPT_DIR/session.sh open kimi-k2.5 604800"
       fix "Or send any request — proxy auto-opens sessions on demand"
     else
       local sess_count="${sess_rest%%|*}"
@@ -447,7 +447,7 @@ else:
 
       if (( hours_int < 2 )); then
         warn "Session for $soonest_model expires in ${hours_left}h"
-        fix "Renew: bash scripts/session.sh open $soonest_model 604800"
+        fix "Renew: bash $SCRIPT_DIR/session.sh open $soonest_model 604800"
       elif (( hours_int < 24 )); then
         pass "Nearest expiry: ${hours_left}h ($soonest_model)"
       else
@@ -487,7 +487,7 @@ else:
           ;;
         LOW)
           warn "Low MOR balance: $bal_detail"
-          fix "Need MOR to open sessions. Swap: bash scripts/swap.sh eth 0.01"
+          fix "Need MOR to open sessions. Swap: bash $SCRIPT_DIR/swap.sh eth 0.01"
           ;;
         LOW_GAS)
           warn "Low ETH (gas): $bal_detail"
@@ -531,10 +531,10 @@ else:
       pass "Live inference working — got response (model may not have followed instruction exactly)"
     elif echo "$infer_result" | grep -q "billing\|Insufficient\|402" 2>/dev/null; then
       fail "Inference returned billing error — this shouldn't happen on Morpheus"
-      fix "Requests may be routing to Venice. Run: bash scripts/diagnose.sh --config"
+      fix "Requests may be routing to Venice. Run: bash $SCRIPT_DIR/diagnose.sh --config"
     elif echo "$infer_result" | grep -q "session" 2>/dev/null; then
       warn "Inference failed — possible session issue"
-      fix "Try opening a fresh session: bash scripts/session.sh open kimi-k2.5 604800"
+      fix "Try opening a fresh session: bash $SCRIPT_DIR/session.sh open kimi-k2.5 604800"
     elif [[ -z "$infer_result" ]]; then
       fail "Inference test timed out (60s) — proxy may be stuck"
       fix "Check proxy logs: tail ~/morpheus/proxy/proxy.log"
@@ -573,7 +573,7 @@ else:
           fix "Load: launchctl load $plist"
         else
           warn "$name ($svc) not installed"
-          fix "Run: bash skills/everclaw/scripts/install-proxy.sh"
+          fix "Run: bash $SCRIPT_DIR/install-proxy.sh"
         fi
         all_loaded=false
       fi

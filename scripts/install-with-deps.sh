@@ -648,6 +648,14 @@ else
   log_ok "EverClaw installed"
 fi
 
+# Resolve scripts directory — supports both monorepo (packages/core/scripts/)
+# and composed flavor repos (scripts/ at root). Must run AFTER clone/update.
+if [[ -d "$INSTALL_DIR/packages/core/scripts" ]]; then
+  SCRIPTS_DIR="$INSTALL_DIR/packages/core/scripts"
+else
+  SCRIPTS_DIR="$INSTALL_DIR/scripts"
+fi
+
 echo ""
 
 # ─── Bootstrap API Key (Auto) ──────────────────────────────────────
@@ -662,12 +670,12 @@ if [[ -f "$HOME/.openclaw/.bootstrap-key" ]]; then
 else
   log "Getting your starter key for GLM-5 inference..."
 
-  if command -v node &>/dev/null && [[ -f "$INSTALL_DIR/scripts/bootstrap-everclaw.mjs" ]]; then
+  if command -v node &>/dev/null && [[ -f "$SCRIPTS_DIR/bootstrap-everclaw.mjs" ]]; then
     cd "$INSTALL_DIR"
-    node scripts/bootstrap-everclaw.mjs --setup 2>/dev/null || {
+    node "$SCRIPTS_DIR/bootstrap-everclaw.mjs" --setup 2>/dev/null || {
       log_warn "Could not reach EverClaw key server (not fatal)"
       log "  The agent will still work via local Ollama fallback."
-      log "  Run manually later: node scripts/bootstrap-everclaw.mjs --setup"
+      log "  Run manually later: node $SCRIPTS_DIR/bootstrap-everclaw.mjs --setup"
     }
   else
     log_warn "Node.js or bootstrap script not available — skipping key setup"
@@ -697,14 +705,14 @@ elif [[ "${DISK_FREE_MB:-0}" -ge 2048 ]]; then
   log "Auto-installing Morpheus proxy-router..."
   echo ""
 
-  if [[ -f "$INSTALL_DIR/scripts/install.sh" ]]; then
-    bash "$INSTALL_DIR/scripts/install.sh" && PROXY_INSTALLED=true || {
+  if [[ -f "$SCRIPTS_DIR/install.sh" ]]; then
+    bash "$SCRIPTS_DIR/install.sh" && PROXY_INSTALLED=true || {
       log_warn "Proxy-router install failed (not fatal)"
       log "  The API Gateway provides inference without it."
-      log "  Retry later: bash $INSTALL_DIR/scripts/install.sh"
+      log "  Retry later: bash $SCRIPTS_DIR/install.sh"
     }
   else
-    log_warn "install.sh not found at $INSTALL_DIR/scripts/install.sh"
+    log_warn "install.sh not found at $SCRIPTS_DIR/install.sh"
   fi
 else
   log "Disk: ${DISK_FREE_MB} MB free < 2048 MB threshold"
@@ -760,8 +768,8 @@ elif detect_ollama; then
   else
     log "Ollama installed but not yet configured in OpenClaw"
     log "Running setup-ollama.sh to configure..."
-    if [[ -f "$INSTALL_DIR/scripts/setup-ollama.sh" ]]; then
-      bash "$INSTALL_DIR/scripts/setup-ollama.sh" --apply 2>&1 | tail -20 || {
+    if [[ -f "$SCRIPTS_DIR/setup-ollama.sh" ]]; then
+      bash "$SCRIPTS_DIR/setup-ollama.sh" --apply 2>&1 | tail -20 || {
         log_warn "Ollama configuration failed (not fatal)"
       }
     fi
@@ -773,14 +781,14 @@ elif [[ "${DISK_FREE_MB:-0}" -ge 5120 && "${TOTAL_RAM_MB:-0}" -ge 2048 ]]; then
   log "Auto-installing Ollama local fallback..."
   echo ""
 
-  if [[ -f "$INSTALL_DIR/scripts/setup-ollama.sh" ]]; then
-    bash "$INSTALL_DIR/scripts/setup-ollama.sh" --apply 2>&1 | tail -30 && OLLAMA_INSTALLED=true || {
+  if [[ -f "$SCRIPTS_DIR/setup-ollama.sh" ]]; then
+    bash "$SCRIPTS_DIR/setup-ollama.sh" --apply 2>&1 | tail -30 && OLLAMA_INSTALLED=true || {
       log_warn "Ollama setup failed (not fatal)"
       log "  Cloud inference via Gateway + proxy-router still works."
-      log "  Retry later: bash $INSTALL_DIR/scripts/setup-ollama.sh --apply"
+      log "  Retry later: bash $SCRIPTS_DIR/setup-ollama.sh --apply"
     }
   else
-    log_warn "setup-ollama.sh not found at $INSTALL_DIR/scripts/"
+    log_warn "setup-ollama.sh not found at $SCRIPTS_DIR/"
   fi
 else
   disk_short=""
@@ -803,16 +811,16 @@ echo ""
 
 CONFIG_MERGED=false
 
-if command -v node &>/dev/null && [[ -f "$INSTALL_DIR/scripts/setup.mjs" ]]; then
+if command -v node &>/dev/null && [[ -f "$SCRIPTS_DIR/setup.mjs" ]]; then
   log "Merging Morpheus providers into OpenClaw config..."
   cd "$INSTALL_DIR"
-  node scripts/setup.mjs --apply --restart 2>&1 | tail -15 && CONFIG_MERGED=true || {
+  node "$SCRIPTS_DIR/setup.mjs" --apply --restart 2>&1 | tail -15 && CONFIG_MERGED=true || {
     log_warn "Config merge or gateway restart failed"
-    log "  Run manually: node $INSTALL_DIR/scripts/setup.mjs --apply --restart"
+    log "  Run manually: node $SCRIPTS_DIR/setup.mjs --apply --restart"
   }
 else
   log_warn "setup.mjs not found — skipping config merge"
-  log "  Run manually: node $INSTALL_DIR/scripts/setup.mjs --apply --restart"
+  log "  Run manually: node $SCRIPTS_DIR/setup.mjs --apply --restart"
 fi
 
 # ─── Ollama API Migration ─────────────────────────────────────────
@@ -913,26 +921,26 @@ echo ""
 if [[ "$CONFIG_MERGED" != true ]]; then
   echo -e "${BOLD}  Manual steps needed:${NC}"
   echo ""
-  log "1. Merge config:  node $INSTALL_DIR/scripts/setup.mjs --apply"
+  log "1. Merge config:  node $SCRIPTS_DIR/setup.mjs --apply"
   log "2. Restart:       openclaw gateway restart"
   echo ""
 fi
 
 # --- Optional: Agent-Chat XMTP Daemon ---
 AGENT_CHAT_SKILL="$INSTALL_DIR/skills/agent-chat"
-if [[ -d "$AGENT_CHAT_SKILL" ]] && [[ -f "$AGENT_CHAT_SKILL/daemon.mjs" ]] && [[ -f "$INSTALL_DIR/scripts/setup-agent-chat.sh" ]]; then
+if [[ -d "$AGENT_CHAT_SKILL" ]] && [[ -f "$AGENT_CHAT_SKILL/daemon.mjs" ]] && [[ -f "$SCRIPTS_DIR/setup-agent-chat.sh" ]]; then
   echo ""
   log "💬 Setting up agent-chat XMTP daemon..."
-  bash "$INSTALL_DIR/scripts/setup-agent-chat.sh" --skip-deps 2>&1 | tail -10 || {
+  bash "$SCRIPTS_DIR/setup-agent-chat.sh" --skip-deps 2>&1 | tail -10 || {
     log_warn "Agent-chat daemon setup had issues — not critical"
-    log "      Run manually: bash scripts/setup-agent-chat.sh"
+    log "      Run manually: bash $SCRIPTS_DIR/setup-agent-chat.sh"
   }
 fi
 
 echo -e "${BOLD}  Useful commands:${NC}"
 echo ""
-log "Test inference:   node $INSTALL_DIR/scripts/bootstrap-everclaw.mjs --test"
-log "Check status:     bash $INSTALL_DIR/scripts/diagnose.sh"
+log "Test inference:   node $SCRIPTS_DIR/bootstrap-everclaw.mjs --test"
+log "Check status:     bash $SCRIPTS_DIR/diagnose.sh"
 log "Get your own key: https://app.mor.org"
 
 echo ""
@@ -947,10 +955,10 @@ echo "     cd \"$INSTALL_DIR\""
 echo "     npm run bootstrap -- --key sk-XXXXXXXXXXXXXXXX"
 echo ""
 echo "  2. Absolute path (works from anywhere):"
-echo "     node \"$INSTALL_DIR/scripts/bootstrap-gateway.mjs\" --key sk-XXXXXXXXXXXXXXXX"
+echo "     node \"$SCRIPTS_DIR/bootstrap-gateway.mjs\" --key sk-XXXXXXXXXXXXXXXX"
 echo ""
 echo "  3. With environment variable (works from anywhere):"
-echo "     EVERCLAW_KEY=sk-XXXXXXXXXXXXXXXX node \"$INSTALL_DIR/scripts/bootstrap-gateway.mjs\""
+echo "     EVERCLAW_KEY=sk-XXXXXXXXXXXXXXXX node \"$SCRIPTS_DIR/bootstrap-gateway.mjs\""
 
 echo ""
 echo -e "${CYAN}  ♾️  Own your inference. Forever.${NC}"
