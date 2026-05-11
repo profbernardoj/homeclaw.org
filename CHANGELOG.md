@@ -2,6 +2,47 @@
 
 All notable changes to EverClaw are documented here.
 
+## [2026.5.11.1938] - 2026-05-11
+
+### Changed — OpenClaw Pin v2026.4.29 → v2026.5.7
+
+- **Dockerfile:** OpenClaw build target updated to `v2026.5.7`
+- **docker-compose.yml:** Image tag and build arg updated
+
+### Upstream Highlights (OpenClaw v2026.4.29 → v2026.5.7)
+
+#### New Features
+- **xAI/Grok 4.3** — Default xAI chat model with image generation, TTS, STT
+- **OpenAI Chat-Latest** — Support for chat-latest model aliases
+- **Google Meet/Voice Call** — Twilio dial-in improvements, realtime Gemini voice bridge
+- **Local Service Startup** — On-demand local model servers before OpenAI-compatible requests
+- **Plugin SDK Session Actions** — scheduleSessionTurn, sendSessionAttachment
+- **Discord Voice** — Realtime voice diagnostics, allowedChannels config
+- **Slack Enhancements** — unfurlLinks/unfurlMedia config, replyBroadcast, App Home tab
+- **WhatsApp Channel/Newsletter** — Explicit @newsletter outbound targets
+- **Context Map** — `/context map` command for session context treemap visualization
+- **Git Plugin Installs** — First-class `git:` plugin installs with ref checkout
+
+#### Fixes
+- **WhatsApp** — libsignal-node dependency fix
+- **Gateway/systemd** — Secrets preservation across restarts
+- **Feishu** — Thread ID hydration fix
+- **LINE** — dmPolicy validation fix
+- **Doctor/OpenAI Codex** — OAuth route revert fix
+- **Release/Plugin Publishing** — Publishing fixes for npm-first cutover
+- **Cron CLI** — Improvements for job management
+- **Gateway Startup** — Leaner hot paths, scoped plugin preloads
+- **Control UI/WebChat** — Sessions, Cron, long-running WebSocket resilience
+- **Messaging** — Telegram topic commands, Discord delivery edge cases, Signal group/media routing
+- **Provider Fixes** — OpenAI-compatible TTS/Realtime, OpenRouter/DeepSeek replay, Anthropic streaming
+
+#### Infrastructure
+- **pnpm 11** — Workspace upgrade
+- **Plugin Registry** — npm-first cutover, ClawPack metadata, cold registry improvements
+- **Dependencies** — TypeBox 1.1.37, AWS SDK 3.1041.0, OpenAI 6.35.0, Codex 0.128.0, Zod 4.4.1
+
+(Reference: https://github.com/openclaw/openclaw/releases)
+
 ## [2026.4.30.2333] - 2026-04-30
 
 ### Changed — OpenClaw Pin v2026.4.26 → v2026.4.29
