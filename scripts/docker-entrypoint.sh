@@ -429,15 +429,24 @@ if jq . "$CONFIG_FILE" > /dev/null 2>&1; then
   fi
 fi
 
-# 2. Clean corrupted plugin-runtime-deps (ENOTEMPTY fix)
-#    The v2026.4.24 installer sometimes leaves a half-written plugin-sdk folder
-#    that causes repeated ENOTEMPTY errors on startup.
+# 2. Clean stale plugin-runtime-deps (ENOTEMPTY fix)
+#    Stale or half-written openclaw-* subdirectories from prior OpenClaw versions
+#    can cause repeated ENOTEMPTY errors on startup. Remove any that don't
+#    match the current OpenClaw version being run.
 PLUGIN_DEPS_DIR="${OPENCLAW_HOME}/plugin-runtime-deps"
-if [ -d "$PLUGIN_DEPS_DIR" ]; then
-  CORRUPTED=$(find "$PLUGIN_DEPS_DIR" -maxdepth 1 -name 'openclaw-2026.4.24*' -type d 2>/dev/null | head -1)
-  if [ -n "$CORRUPTED" ]; then
-    rm -rf "$CORRUPTED"
-    echo "   ✅ Cleaned corrupted plugin-runtime-deps"
+if [ -d "$PLUGIN_DEPS_DIR" ] && [ ! -L "$PLUGIN_DEPS_DIR" ]; then
+  CURRENT_OC_VER=$(node -e "try{const v=require('/app/package.json').version;console.log(typeof v==='string'&&v?v:'')}catch(e){console.log('')}" 2>/dev/null)
+  CLEANED=0
+  while IFS= read -r STALE; do
+    DIR_NAME=$(basename "$STALE")
+    DIR_VER=${DIR_NAME#openclaw-}
+    if [ -n "$CURRENT_OC_VER" ] && [ "$DIR_VER" != "$CURRENT_OC_VER" ]; then
+      rm -rf "$STALE"
+      CLEANED=$((CLEANED + 1))
+    fi
+  done < <(find "$PLUGIN_DEPS_DIR" -maxdepth 1 -name 'openclaw-*' -type d 2>/dev/null)
+  if [ "$CLEANED" -gt 0 ]; then
+    echo "   ✅ Cleaned $CLEANED stale plugin-runtime-deps (kept $CURRENT_OC_VER)"
   fi
 fi
 
