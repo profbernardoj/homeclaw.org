@@ -414,10 +414,25 @@ echo "🔧 Applying Bonjour/mDNS mitigation (OpenClaw v2026.4.24)..."
 
 # 1. Disable the bonjour plugin via config (prevents the crash entirely)
 if jq . "$CONFIG_FILE" > /dev/null 2>&1; then
-  BONJOUR_DISABLED=$(jq -r '.gateway.plugins.bonjour.enabled // "notset"' "$CONFIG_FILE" 2>/dev/null)
-  if [ "$BONJOUR_DISABLED" != "false" ]; then
+  # Fix: clean up incorrect gateway.plugins path from prior EverClaw builds.
+  # Older entrypoints wrote bonjour config under gateway.plugins (wrong) instead
+  # of plugins.entries (correct). The stale key causes "Unrecognized key: plugins"
+  # on startup because gateway has additionalProperties: false.
+  HAS_STALE_PATH=$(jq -r '.gateway.plugins // empty' "$CONFIG_FILE" 2>/dev/null)
+  if [ -n "$HAS_STALE_PATH" ]; then
+    TMP_CLEAN=$(mktemp)
+    if jq 'del(.gateway.plugins)' "$CONFIG_FILE" > "$TMP_CLEAN" 2>/dev/null; then
+      mv "$TMP_CLEAN" "$CONFIG_FILE"
+      echo "   🧹 Removed stale gateway.plugins key (schema violation)"
+    else
+      rm -f "$TMP_CLEAN"
+    fi
+  fi
+
+  BONJOUR_ENABLED_VALUE=$(jq -r '.plugins.entries.bonjour.enabled // "notset"' "$CONFIG_FILE" 2>/dev/null)
+  if [ "$BONJOUR_ENABLED_VALUE" != "false" ]; then
     TMP_CONFIG=$(mktemp)
-    if jq '.gateway.plugins.bonjour.enabled = false' "$CONFIG_FILE" > "$TMP_CONFIG" 2>/dev/null; then
+    if jq '.plugins.entries.bonjour.enabled = false' "$CONFIG_FILE" > "$TMP_CONFIG" 2>/dev/null; then
       mv "$TMP_CONFIG" "$CONFIG_FILE"
       echo "   ✅ Bonjour plugin disabled in config"
     else
