@@ -800,7 +800,9 @@ const EXPORT_TIMEOUT_MS = Number.isFinite(EXPORT_TIMEOUT_MS_RAW) && EXPORT_TIMEO
 //   auth-proxy is at /opt/everclaw/auth-proxy/server.mjs
 //   migrate-export.mjs is at /opt/everclaw/skill/scripts/migrate-export.mjs
 // Relative path: ../skill/scripts/migrate-export.mjs
-const EXPORT_SCRIPT = join(__dirname, '..', 'skill', 'scripts', 'migrate-export.mjs');
+// Test hook: point EXPORT_SCRIPT at a hermetic fake exporter (no real export
+// in tests). Override must never be set via untrusted input (fixed env only).
+const EXPORT_SCRIPT = process.env.AGENT_EXPORT_SCRIPT || join(__dirname, '..', 'skill', 'scripts', 'migrate-export.mjs');
 const EXPORT_UPLOAD_URL = process.env.AGENT_EXPORT_UPLOAD_URL || ''; // Edge Function URL for bundle upload
 
 // ─── Pull-path bundle tokens (single-use, memory-only) ─────────────────────
