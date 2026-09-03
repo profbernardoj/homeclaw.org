@@ -809,7 +809,7 @@ const EXPORT_UPLOAD_URL = process.env.AGENT_EXPORT_UPLOAD_URL || ''; // Edge Fun
 // /internal/export/start issues a token; /internal/export/bundle consumes it
 // exactly once and streams the file. Tokens expire after 10 min. The bundle
 // file is deleted after transfer (success, failure, timeout, or expiry).
-const BUNDLE_TOKEN_TTL_MS = 10 * 60_000;
+const BUNDLE_TOKEN_TTL_MS = parseInt(process.env.BUNDLE_TOKEN_TTL_MS || (10 * 60_000).toString(), 10);
 const BUNDLE_TOKEN_MAX = 32; // bounded map — exports are rare
 const bundleTokens = new Map(); // token -> { path, sizeBytes, expiresAt }
 
