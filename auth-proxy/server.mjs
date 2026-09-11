@@ -553,6 +553,10 @@ const proxy = httpProxy.createProxyServer({
   ws: true,
   xfwd: true,
 });
+// Note (verified 2026-09-10): this ProxyServer is NOT a node
+// EventEmitter instance — http-proxy ships a custom emitter shim (on/once/
+// removeListener only, no setMaxListeners, no default-10 warning logic), so
+// per-request 'error' listeners here never trip MaxListenersExceededWarning.
 
 // ─── Gateway warm-up retry (BACK-IOC-014 follow-up, 2026-09-10) ─────────────
 // The auth-proxy is health-gated BEFORE the OpenClaw gateway starts, so the
@@ -577,60 +581,78 @@ function isGatewayBootError(err) {
   return code === 'ECONNREFUSED' || code === 'ECONNRESET' || code === 'ECONNABORTED';
 }
 
-function proxyWithBootRetry(req, res, attempt = 0) {
+function proxyWithBootRetry(req, res) {
   req.__bootRetryManaged = true;
-  // Per-attempt error handler. A single finish/close listener pair (attached
-  // below, once per attempt, removed with the error listener in cleanup)
-  // governs lifecycle: no cross-attempt listener stacking (Grok R1-C2).
-  const onError = (error) => {
-    if (settled) return;
-    settled = true;
-    proxy.removeListener('error', onError);
+  // Listener ceilings: each attempt's proxy attaches library listeners to
+  // the same req/res; raised once for the request lifetime.
+  req.setMaxListeners(50);
+  res.setMaxListeners(50);
+  // Single lifecycle state for the whole retry chain (R7): one settled flag,
+  // one timer slot, one listener pair on res for the entire request.
+  const state = { settled: false, attempt: 0, timer: null };
+
+  const settle = () => {
+    state.settled = true;
+    if (state.timer) clearTimeout(state.timer);
     res.removeListener('finish', onDone);
     res.removeListener('close', onDone);
-    console.error(`[proxy] Error (attempt ${attempt + 1}):`, error.message);
-    // Grok R2-C1: only GET is retried — no request body to double-consume, no
-    // side effects. Non-GET falls through to the plain-text 502 immediately.
-    if (req.method === 'GET' && isGatewayBootError(error) && attempt < GATEWAY_RETRY_MAX_ATTEMPTS - 1) {
-      // Client may have gone away while we waited — never retry into a dead res
-      if (res.writableEnded || res.destroyed || req.aborted) return;
-      const delay = Math.min(GATEWAY_RETRY_BASE_MS * Math.pow(1.6, attempt), 5000);
-      console.log(`[proxy] Gateway booting — retry ${attempt + 1}/${GATEWAY_RETRY_MAX_ATTEMPTS} in ${Math.round(delay)}ms`);
-      const timer = setTimeout(() => {
-        // Aborted during backoff — stop the chain (Grok R2-C2)
-        if (res.writableEnded || res.destroyed || req.aborted) return;
-        proxyWithBootRetry(req, res, attempt + 1);
+  };
+  const onDone = () => settle();
+
+  const onError = (error) => {
+    if (state.settled) return;
+    console.error(`[proxy] Error (attempt ${state.attempt + 1}):`, error.message);
+    if (req.method === 'GET' && isGatewayBootError(error) && state.attempt < GATEWAY_RETRY_MAX_ATTEMPTS - 1) {
+      if (res.writableEnded || res.destroyed || req.aborted) { settle(); return; }
+      const delay = Math.min(GATEWAY_RETRY_BASE_MS * Math.pow(1.6, state.attempt), 5000);
+      console.log(`[proxy] Gateway booting — retry ${state.attempt + 1}/${GATEWAY_RETRY_MAX_ATTEMPTS} in ${Math.round(delay)}ms`);
+      state.attempt += 1;
+      state.timer = setTimeout(() => {
+        if (res.writableEnded || res.destroyed || req.aborted) { settle(); return; }
+        attempt();
       }, delay);
-      req.once('close', () => clearTimeout(timer));
       return;
     }
-    if (!res.headersSent) {
-      if (req.method === 'GET') {
-        res.writeHead(502, bootPageHeaders());
-        serveBootPageBody(res);
-      } else {
-        res.writeHead(502, { 'Content-Type': 'text/plain' });
-        res.end('Bad Gateway — OpenClaw may still be starting');
-      }
+    settle();
+    sendFinalBootError(req, res);
+  };
+
+  // Fresh proxy per attempt: a reused instance stacks its library-added
+  // listeners on req/res across retries; a pristine one keeps state clean
+  // and is GC'd when this attempt settles. Each instance serves exactly
+  // this request, so no cross-request error cross-talk.
+  const attempt = () => {
+    if (state.settled) return;
+    const attemptProxy = httpProxy.createProxyServer({
+      target: `http://127.0.0.1:${CONFIG.internalPort}`,
+      xfwd: true,
+    });
+    attemptProxy.on('error', onError);
+    try {
+      attemptProxy.web(req, res);
+    } catch (err) {
+      onError(err);
     }
   };
-  const onDone = () => {
-    settled = true;
-    proxy.removeListener('error', onError);
-  };
-  let settled = false;
+
   res.on('finish', onDone);
   res.on('close', onDone);
-  proxy.once('error', onError);
-  try {
-    proxy.web(req, res);
-  } catch (err) {
-    onError(err);
+  attempt();
+}
+
+function sendFinalBootError(req, res) {
+  if (!res || typeof res.writeHead !== 'function' || res.headersSent) return;
+  if (req.method === 'GET') {
+    res.writeHead(502, bootPageHeaders());
+    serveBootPageBody(res);
+  } else {
+    res.writeHead(502, { 'Content-Type': 'text/plain' });
+    res.end('Bad Gateway — OpenClaw may still be starting');
   }
 }
 
 function bootPageHeaders() {
-  // Grok R2-S1: hardening headers on the boot page
+  // Hardening headers on the boot page
   return {
     'Content-Type': 'text/html; charset=utf-8',
     'Retry-After': '3',
@@ -641,7 +663,7 @@ function bootPageHeaders() {
 }
 
 function serveBootPageBody(res) {
-  // Grok R1-S1: no request data interpolated — fixed safe HTML only.
+  // Static page — no request data interpolated.
   res.end(`<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <meta http-equiv="refresh" content="3">
@@ -658,15 +680,7 @@ proxy.on('error', (error, req, res) => {
   // Requests owned by proxyWithBootRetry handle their own errors (retry loop).
   if (req && req.__bootRetryManaged) return;
   console.error('[proxy] Error:', error.message);
-  if (res && typeof res.writeHead === 'function' && !res.headersSent) {
-    if (req.method === 'GET') {
-      res.writeHead(502, { 'Content-Type': 'text/html; charset=utf-8', 'Retry-After': '3' });
-      serveBootPageBody(res, req);
-    } else {
-      res.writeHead(502, { 'Content-Type': 'text/plain' });
-      res.end('Bad Gateway — OpenClaw may still be starting');
-    }
-  }
+  sendFinalBootError(req, res);
 });
 
 // ─── Request Handler ─────────────────────────────────────────────────────────
@@ -1260,7 +1274,7 @@ async function handleInternalExport(req, res) {
 
   // Child stderr: forward only when AGENT_EXPORT_DEBUG=1 (diagnostics).
   // Otherwise swallow it — the JSON contract is on stdout (maxBuffer 10 MB)
-  // and stderr must not bloat proxy logs (Grok R5-F5 / R6-F4).
+  // and stderr must not bloat proxy logs.
   if (process.env.AGENT_EXPORT_DEBUG === '1') {
     child.stderr?.on('data', (chunk) => {
       process.stderr.write(`[export-child] ${chunk}`);
