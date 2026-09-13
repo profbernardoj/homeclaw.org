@@ -255,7 +255,7 @@ const HANDOFF_TOKEN_TTL_MS = 90_000; // 90 seconds (matches JWT TTL)
 const HANDOFF_METRIC_EVENTS = [
   'no_token', 'rate_limited', 'jwt_failed', 'already_consumed_inmem',
   'fqdn_mismatch', 'owner_check_failed', 'owner_verify_error',
-  'db_rejected', 'success', 'error',
+  'db_rejected', 'success', 'error', 'sso_disabled',
 ];
 const handoffMetrics = {
   since: new Date().toISOString(),
@@ -1153,10 +1153,11 @@ async function handleInternalDiag(req, res) {
     res.end(JSON.stringify({ error: 'unauthorized' }));
     return;
   }
-  const payload = await getDiagnostics();
+  const base = await getDiagnostics();
   // BACK-IOC-016: handoff metrics added OUTSIDE the cached payload —
   // getDiagnostics() caches for DIAG_CACHE_TTL_MS and counters must be fresh.
-  payload.handoff = getHandoffMetricsSnapshot();
+  // Shallow-copy so the cached object is never mutated (Grok IOC-016 R1).
+  const payload = { ...base, handoff: getHandoffMetricsSnapshot() };
   res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify(payload));
 }
@@ -1742,8 +1743,10 @@ async function handleRequest(req, res) {
   if (pathname === '/auth/handoff' && req.method === 'POST') {
     // SSO disabled — don't waste rate-limit slots or attempt JWT verify with empty key
     if (!CONFIG.handoffSigningSecret) {
-      recordHandoffMetric('jwt_failed', 'sso_disabled');
-      handoffLog('JWT_FAILED', 'SSO disabled — serving login page (404)');
+      // Dedicated counter: must NOT pollute jwt_failed (Grok IOC-016 R1 —
+      // fleet greps would misread disabled containers as verify failures).
+      recordHandoffMetric('sso_disabled');
+      handoffLog('SSO_DISABLED', 'SSO disabled — serving login page (404)');
       serveLoginPage(res, 404);
       return;
     }
@@ -1883,7 +1886,8 @@ async function handleRequest(req, res) {
       const sessionValue = signSession(sub);
       const cookieOpts = getCookieOptions(req);
 
-      console.log(`[handoff] ✓ SSO handoff successful: sub=${sub} fqdn=${expectedFqdn} jti=${jti}`);
+      // BACK-IOC-016: single success log line, truncated identifiers (legacy
+      // full-sub/jti line removed per Grok IOC-016 R1 log-hygiene finding).
       handoffLog('SUCCESS', `SSO handoff successful: sub=${String(sub).slice(0, 16)}… fqdn=${expectedFqdn} jti=${String(jti).slice(0, 8)}…`);
       recordHandoffMetric('success');
 
