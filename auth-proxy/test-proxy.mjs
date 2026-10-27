@@ -10,6 +10,7 @@
  */
 
 import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { createHmac, generateKeyPairSync, randomBytes } from 'node:crypto';
 import { SignJWT, exportJWK } from 'jose';
 import { createPrivateKey } from 'node:crypto';
@@ -201,6 +202,24 @@ async function runTests() {
       assert(res.headers.get('content-type').includes('javascript'), 'Content-Type is JavaScript');
       assert(js.length > 1000, `Bundle has content (${Math.round(js.length / 1024)}KB)`);
       assert(res.headers.get('cache-control').includes('immutable'), 'Bundle is cacheable');
+
+      // Drift guard (2026-10-27, privy-login-parity): the login page must NOT
+      // hardcode a loginMethods config — the Privy modal follows the app's
+      // dashboard-enabled methods (server-driven). A hardcoded list drifted
+      // from the dashboards before (dead Apple button, no X/GitHub/Discord at
+      // the agent URL). SDK-internal property access (t.loginMethods) is fine;
+      // an app-config array literal (loginMethods:["..."]) is the bug pattern.
+      assert(!/loginMethods:\s*\[/.test(js), 'No hardcoded loginMethods array (dashboard-driven modal)');
+      // And the SDK fallback branch (server-driven methods) must be present.
+      assert(js.includes('loginMethods') && /else\s*\w+=\w*\.email_auth/.test(js.replace(/\n/g, ' ')),
+        'SDK server-driven fallback branch present (email_auth from app config)');
+      // Source-level guard (stable companion to the minified-bundle greps above,
+      // which encode SDK minification details and may need updating on SDK
+      // bumps): the PrivyProvider config in login-app.jsx must not hardcode a
+      // loginMethods list either.
+      const loginAppSource = await readFile(new URL('./login-app.jsx', import.meta.url), 'utf8');
+      assert(!/loginMethods\s*:\s*\[/.test(loginAppSource),
+        'login-app.jsx source has no hardcoded loginMethods (dashboard-driven)');
     }
 
     // ── 4. Auth callback — valid owner JWT → session cookie ──
